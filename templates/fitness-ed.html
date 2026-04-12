@@ -1,0 +1,1227 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FITNESS ED</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <style>
+      :root {
+        --bg: #071311;
+        --bg-soft: #102523;
+        --panel: rgba(13, 29, 27, 0.92);
+        --panel-strong: rgba(18, 38, 35, 0.96);
+        --border: rgba(160, 255, 220, 0.14);
+        --text: #ecfff7;
+        --muted: #96b6ad;
+        --accent: #4ef2b3;
+        --accent-strong: #18c888;
+        --warning: #ffd36e;
+        --shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Space Grotesk", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(
+            circle at top,
+            rgba(78, 242, 179, 0.18),
+            transparent 28%
+          ),
+          radial-gradient(
+            circle at bottom right,
+            rgba(255, 211, 110, 0.12),
+            transparent 26%
+          ),
+          linear-gradient(180deg, #08110f 0%, var(--bg) 48%, #0c1c19 100%);
+      }
+
+      .app-shell {
+        width: min(100%, 460px);
+        min-height: 100vh;
+        margin: 0 auto;
+        padding: 1rem 1rem 2rem;
+        position: relative;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.3rem 0 1rem;
+        position: relative;
+        z-index: 50;
+      }
+
+      .brand {
+        font-size: 1.3rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+      }
+
+      .menu-button {
+        width: 48px;
+        height: 48px;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        transition:
+          transform 0.2s ease,
+          background 0.2s ease,
+          border-color 0.2s ease;
+      }
+
+      .menu-button:hover {
+        background: rgba(78, 242, 179, 0.08);
+        border-color: rgba(78, 242, 179, 0.24);
+      }
+
+      .menu-button:active {
+        transform: scale(0.97);
+      }
+
+      .menu-button span,
+      .menu-button span::before,
+      .menu-button span::after {
+        display: block;
+        width: 18px;
+        height: 2px;
+        background: currentColor;
+        border-radius: 999px;
+        position: relative;
+        transition:
+          transform 0.22s ease,
+          opacity 0.22s ease,
+          top 0.22s ease;
+      }
+
+      .menu-button span::before,
+      .menu-button span::after {
+        content: "";
+        position: absolute;
+        left: 0;
+      }
+
+      .menu-button span::before {
+        top: -6px;
+      }
+
+      .menu-button span::after {
+        top: 6px;
+      }
+
+      .menu-button.open span {
+        background: transparent;
+      }
+
+      .menu-button.open span::before {
+        top: 0;
+        transform: rotate(45deg);
+      }
+
+      .menu-button.open span::after {
+        top: 0;
+        transform: rotate(-45deg);
+      }
+
+      .menu-panel {
+        position: absolute;
+        top: 4.6rem;
+        right: 1rem;
+        width: 220px;
+        padding: 0.9rem;
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        background: var(--panel-strong);
+        box-shadow: var(--shadow);
+        opacity: 0;
+        transform: translateY(-8px);
+        pointer-events: none;
+        transition:
+          opacity 0.25s ease,
+          transform 0.25s ease;
+        z-index: 120;
+      }
+
+      .menu-panel.open {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+
+      .menu-panel button {
+        width: 100%;
+        padding: 0.9rem 1rem;
+        border: 0;
+        border-radius: 14px;
+        background: transparent;
+        color: var(--text);
+        text-align: left;
+        font: inherit;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .menu-panel button:hover {
+        background: rgba(78, 242, 179, 0.08);
+      }
+
+      .menu-panel button::after {
+        content: ">";
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      .hero-card,
+      .stats-grid,
+      .map-panel,
+      .timeline,
+      .todo-screen,
+      .about-screen,
+      .login-screen {
+        margin-top: 1rem;
+      }
+
+      .hero-card {
+        margin-top: 0;
+      }
+
+      .hero-card {
+        padding: 1.2rem;
+        border-radius: 28px;
+        background: linear-gradient(
+          180deg,
+          rgba(14, 35, 31, 0.96),
+          rgba(10, 24, 22, 0.94)
+        );
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+      }
+
+      .eyebrow {
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-size: 0.72rem;
+      }
+
+      .hero-card h1 {
+        margin: 0.7rem 0 0.55rem;
+        font-size: 2rem;
+        line-height: 1.04;
+      }
+
+      .hero-card p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.65;
+        font-size: 0.98rem;
+      }
+
+      .controls {
+        display: flex;
+        gap: 0.8rem;
+        margin-top: 1rem;
+      }
+
+      .control-button {
+        flex: 1;
+        padding: 1rem 1.1rem;
+        border: 0;
+        border-radius: 18px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+        transition:
+          transform 0.2s ease,
+          opacity 0.2s ease;
+      }
+
+      .control-button:active {
+        transform: scale(0.98);
+      }
+
+      .control-button.primary {
+        color: #042417;
+        background: linear-gradient(135deg, var(--accent), #8ff4cd);
+      }
+
+      .control-button.secondary {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+      }
+
+      .status-line {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 0.9rem;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+      }
+
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--warning);
+        box-shadow: 0 0 0 6px rgba(255, 211, 110, 0.1);
+      }
+
+      .status-dot.live {
+        background: var(--accent);
+        box-shadow: 0 0 0 6px rgba(78, 242, 179, 0.12);
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.85rem;
+        margin-top: 0.8rem;
+      }
+
+      .stat-card {
+        padding: 1rem;
+        border-radius: 22px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .stat-card small {
+        display: block;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        font-size: 0.72rem;
+      }
+
+      .stat-card strong {
+        display: block;
+        margin-top: 0.55rem;
+        font-size: 1.7rem;
+      }
+
+      .map-panel {
+        padding: 0.9rem;
+        border-radius: 28px;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        position: relative;
+        z-index: 1;
+      }
+
+      .panel-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.9rem;
+      }
+
+      .panel-head h2 {
+        margin: 0;
+        font-size: 1rem;
+        letter-spacing: 0.04em;
+      }
+
+      .panel-head span {
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+
+      #map {
+        height: 320px;
+        border-radius: 22px;
+        overflow: hidden;
+      }
+
+      .timeline {
+        padding: 1rem;
+        border-radius: 24px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.04);
+        margin-top: 0.8rem;
+      }
+
+      .timeline h3 {
+        margin: 0 0 0.9rem;
+        font-size: 1rem;
+      }
+
+      .timeline ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 0.8rem;
+      }
+
+      .timeline li {
+        padding: 0.85rem 0.95rem;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .screen {
+        display: none;
+      }
+
+      .screen.active {
+        display: block;
+      }
+
+      .todo-screen {
+        padding: 1rem;
+        border-radius: 28px;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        box-shadow: var(--shadow);
+      }
+
+      .todo-screen h2 {
+        margin: 0;
+        font-size: 1.35rem;
+      }
+
+      .todo-screen p {
+        margin: 0.55rem 0 0;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .todo-form {
+        display: grid;
+        gap: 0.8rem;
+        margin-top: 1rem;
+      }
+
+      .todo-input {
+        width: 100%;
+        padding: 1rem 1rem;
+        border-radius: 18px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        font: inherit;
+      }
+
+      .todo-input::placeholder {
+        color: rgba(150, 182, 173, 0.8);
+      }
+
+      .todo-add {
+        padding: 1rem 1.1rem;
+        border: 0;
+        border-radius: 18px;
+        color: #042417;
+        background: linear-gradient(135deg, var(--accent), #8ff4cd);
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .todo-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 1rem;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .todo-list {
+        list-style: none;
+        padding: 0;
+        margin: 1rem 0 0;
+        display: grid;
+        gap: 0.8rem;
+      }
+
+      .todo-item {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        padding: 0.95rem 1rem;
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .todo-item input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        accent-color: var(--accent);
+        cursor: pointer;
+      }
+
+      .todo-text {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .todo-text strong {
+        display: block;
+        font-size: 1rem;
+      }
+
+      .todo-text span {
+        display: block;
+        margin-top: 0.25rem;
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      .todo-item.done .todo-text strong {
+        text-decoration: line-through;
+        color: var(--muted);
+      }
+
+      .todo-delete {
+        border: 0;
+        background: transparent;
+        color: var(--warning);
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .empty-state {
+        padding: 1rem;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .about-screen {
+        padding: 1.1rem;
+        border-radius: 28px;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        box-shadow: var(--shadow);
+      }
+
+      .about-screen h2 {
+        margin: 0;
+        font-size: 1.4rem;
+      }
+
+      .about-screen p {
+        margin: 0.7rem 0 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .about-grid {
+        display: grid;
+        gap: 0.85rem;
+        margin-top: 1.1rem;
+      }
+
+      .about-card {
+        padding: 1rem;
+        border-radius: 22px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .about-card small {
+        display: block;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.72rem;
+      }
+
+      .about-card strong {
+        display: block;
+        margin-top: 0.45rem;
+        font-size: 1.05rem;
+      }
+
+      .social-links {
+        display: grid;
+        gap: 0.8rem;
+        margin-top: 1rem;
+      }
+
+      .social-link {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        text-decoration: none;
+      }
+
+      .social-link span {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .login-screen {
+        padding: 1.1rem;
+        border-radius: 28px;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        box-shadow: var(--shadow);
+      }
+
+      .login-screen h2 {
+        margin: 0;
+        font-size: 1.4rem;
+      }
+
+      .login-screen p {
+        margin: 0.65rem 0 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .login-form {
+        display: grid;
+        gap: 0.85rem;
+        margin-top: 1.1rem;
+      }
+
+      .login-note {
+        margin-top: 0.85rem;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .leaflet-control-attribution {
+        font-size: 10px;
+      }
+
+      @media (min-width: 760px) {
+        .app-shell {
+          width: min(100% - 2rem, 980px);
+          padding: 1.25rem 1.5rem 2.5rem;
+        }
+
+        .dashboard {
+          display: grid;
+          grid-template-columns: 360px 1fr;
+          gap: 1.4rem;
+          align-items: start;
+        }
+
+        .map-panel {
+          margin-top: 0;
+        }
+
+        .hero-card,
+        .stats-grid,
+        .timeline {
+          margin-top: 0;
+        }
+
+        #map {
+          height: 620px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand">FITNESS ED</div>
+        <button class="menu-button" type="button" aria-label="Open menu">
+          <span></span>
+        </button>
+        <div class="menu-panel" id="menuPanel">
+          <button type="button">Home</button>
+          <button type="button">Dashboard</button>
+          <button type="button">History</button>
+          <button type="button">To Do List</button>
+          <button type="button">About Us</button>
+          <a href="{{ url_for('auth') }}"
+            ><button type="button">Login</button></a
+          >
+        </div>
+      </header>
+
+      <section class="screen active" id="dashboardScreen">
+        <section class="dashboard">
+          <div>
+            <section class="hero-card">
+              <div class="eyebrow">Live Activity Tracker</div>
+              <h1>Track steps, pace, distance, and your full route.</h1>
+              <p>
+                Tap start tracking to lock your current point as the route
+                start. As you move, your path is drawn on the map in real time.
+              </p>
+
+              <div class="controls">
+                <button
+                  class="control-button primary"
+                  id="startButton"
+                  type="button"
+                >
+                  Start Tracking
+                </button>
+                <button
+                  class="control-button secondary"
+                  id="stopButton"
+                  type="button"
+                >
+                  Stop
+                </button>
+              </div>
+
+              <div class="status-line">
+                <span class="status-pill">
+                  <span class="status-dot" id="statusDot"></span>
+                  <span id="trackingStatus">Waiting to start</span>
+                </span>
+                <span id="elapsedTime">00:00</span>
+              </div>
+            </section>
+
+            <section class="stats-grid">
+              <article class="stat-card">
+                <small>Estimated Steps</small>
+                <strong id="stepsValue">0</strong>
+              </article>
+              <article class="stat-card">
+                <small>Distance</small>
+                <strong id="distanceValue">0.00 km</strong>
+              </article>
+              <article class="stat-card">
+                <small>Pace / km</small>
+                <strong id="paceValue">0:00</strong>
+              </article>
+              <article class="stat-card">
+                <small>Current Location</small>
+                <strong id="locationValue">Waiting...</strong>
+              </article>
+            </section>
+
+            <section class="timeline">
+              <h3>How It Works</h3>
+              <ul>
+                <li>
+                  The first GPS point captured after you press start becomes the
+                  starting point.
+                </li>
+                <li>
+                  Your route line updates as new coordinates come in from your
+                  device location.
+                </li>
+                <li>
+                  Steps are estimated from covered distance when step sensor
+                  data is unavailable.
+                </li>
+              </ul>
+            </section>
+          </div>
+
+          <section class="map-panel">
+            <div class="panel-head">
+              <h2>Movement Route Map</h2>
+              <span id="mapLabel">Map ready</span>
+            </div>
+            <div id="map" aria-label="Route map"></div>
+          </section>
+        </section>
+      </section>
+
+      <section class="screen" id="todoScreen">
+        <section class="todo-screen">
+          <div class="eyebrow">To Do List</div>
+          <h2>Plan your next fitness tasks.</h2>
+          <p>
+            Add reminders, workout notes, or daily goals and keep them in one
+            place inside FITNESS ED.
+          </p>
+
+          <form class="todo-form" id="todoForm">
+            <input
+              class="todo-input"
+              id="todoInput"
+              type="text"
+              placeholder="Add a new task like Morning walk for 30 mins"
+              maxlength="120"
+            />
+            <button class="todo-add" type="submit">Add To Do</button>
+          </form>
+
+          <div class="todo-meta">
+            <span id="todoCount">0 tasks</span>
+            <span id="todoDoneCount">0 completed</span>
+          </div>
+
+          <ul class="todo-list" id="todoList"></ul>
+        </section>
+      </section>
+
+      <section class="screen" id="aboutScreen">
+        <section class="about-screen">
+          <div class="eyebrow">About Us</div>
+          <h2>Creator intro and social links.</h2>
+          <p>
+            This section is for your personal introduction inside FITNESS ED.
+            You can describe who you are, what you build, and how people can
+            connect with you.
+          </p>
+
+          <div class="about-grid">
+            <article class="about-card">
+              <small>Who I Am</small>
+              <strong>Your Name Here</strong>
+              <p>
+                I am a builder and fitness-tech enthusiast creating clean,
+                practical digital experiences that combine design, movement, and
+                real-world usefulness.
+              </p>
+            </article>
+          </div>
+
+          <div class="social-links">
+            <a
+              class="social-link"
+              href="https://instagram.com/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <div>
+                <strong>Instagram</strong>
+                <span>@yourhandle</span>
+              </div>
+              <span>Open</span>
+            </a>
+
+            <a
+              class="social-link"
+              href="https://github.com/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <div>
+                <strong>GitHub</strong>
+                <span>github.com/yourprofile</span>
+              </div>
+              <span>Open</span>
+            </a>
+
+            <a
+              class="social-link"
+              href="https://linkedin.com/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <div>
+                <strong>LinkedIn</strong>
+                <span>linkedin.com/in/yourprofile</span>
+              </div>
+              <span>Open</span>
+            </a>
+          </div>
+        </section>
+      </section>
+
+      <section class="screen" id="loginScreen">
+        <section class="login-screen">
+          <div class="eyebrow">Login</div>
+          <h2>Save your name for a personalized home screen.</h2>
+          <p>
+            Enter the name you want FITNESS ED to use in the welcome message on
+            Home.
+          </p>
+
+          <form class="login-form" id="loginForm">
+            <input
+              class="todo-input"
+              id="userNameInput"
+              type="text"
+              placeholder="Enter your name"
+              maxlength="60"
+            />
+            <button class="todo-add" type="submit">Save Login Name</button>
+          </form>
+
+          <div class="login-note" id="loginNote">No name saved yet.</div>
+        </section>
+      </section>
+    </main>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script>
+      const menuButton = document.querySelector(".menu-button");
+      const menuPanel = document.getElementById("menuPanel");
+      const menuItems = Array.from(menuPanel.querySelectorAll("button"));
+      const dashboardScreen = document.getElementById("dashboardScreen");
+      const todoScreen = document.getElementById("todoScreen");
+      const aboutScreen = document.getElementById("aboutScreen");
+      const loginScreen = document.getElementById("loginScreen");
+      const startButton = document.getElementById("startButton");
+      const stopButton = document.getElementById("stopButton");
+      const trackingStatus = document.getElementById("trackingStatus");
+      const statusDot = document.getElementById("statusDot");
+      const elapsedTime = document.getElementById("elapsedTime");
+      const stepsValue = document.getElementById("stepsValue");
+      const distanceValue = document.getElementById("distanceValue");
+      const paceValue = document.getElementById("paceValue");
+      const locationValue = document.getElementById("locationValue");
+      const mapLabel = document.getElementById("mapLabel");
+      const todoForm = document.getElementById("todoForm");
+      const todoInput = document.getElementById("todoInput");
+      const todoList = document.getElementById("todoList");
+      const todoCount = document.getElementById("todoCount");
+      const todoDoneCount = document.getElementById("todoDoneCount");
+      const loginForm = document.getElementById("loginForm");
+      const userNameInput = document.getElementById("userNameInput");
+      const loginNote = document.getElementById("loginNote");
+
+      let watchId = null;
+      let startTimestamp = null;
+      let timerId = null;
+      let totalDistanceMeters = 0;
+      let routePoints = [];
+      let startMarker = null;
+      let liveMarker = null;
+      let todos = [
+        { id: 1, text: "Stretch for 10 minutes", done: false },
+        { id: 2, text: "Evening 3 km walk", done: true },
+      ];
+      let savedUserName = localStorage.getItem("fitnessEdUserName") || "";
+
+      const map = L.map("map", { zoomControl: false }).setView(
+        [20.5937, 78.9629],
+        5,
+      );
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors",
+      }).addTo(map);
+
+      L.control.zoom({ position: "bottomright" }).addTo(map);
+
+      const routeLine = L.polyline([], {
+        color: "#4ef2b3",
+        weight: 5,
+        opacity: 0.9,
+      }).addTo(map);
+
+      const formatElapsed = (seconds) => {
+        const mins = Math.floor(seconds / 60)
+          .toString()
+          .padStart(2, "0");
+        const secs = Math.floor(seconds % 60)
+          .toString()
+          .padStart(2, "0");
+        return `${mins}:${secs}`;
+      };
+
+      const formatPace = () => {
+        if (!startTimestamp || totalDistanceMeters < 10) return "0:00";
+        const elapsedSeconds = (Date.now() - startTimestamp) / 1000;
+        const paceSeconds = elapsedSeconds / (totalDistanceMeters / 1000);
+        const mins = Math.floor(paceSeconds / 60);
+        const secs = Math.floor(paceSeconds % 60)
+          .toString()
+          .padStart(2, "0");
+        return `${mins}:${secs}`;
+      };
+
+      const updateStats = (lat, lng) => {
+        const estimatedSteps = Math.round(totalDistanceMeters / 0.78);
+        stepsValue.textContent = estimatedSteps.toLocaleString();
+        distanceValue.textContent = `${(totalDistanceMeters / 1000).toFixed(2)} km`;
+        paceValue.textContent = formatPace();
+        locationValue.textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      };
+
+      const setTrackingState = (active, text) => {
+        trackingStatus.textContent = text;
+        statusDot.classList.toggle("live", active);
+        mapLabel.textContent = active ? "Tracking live" : "Map ready";
+      };
+
+      const resetTracking = () => {
+        if (watchId !== null) {
+          navigator.geolocation.clearWatch(watchId);
+          watchId = null;
+        }
+        if (timerId) {
+          window.clearInterval(timerId);
+          timerId = null;
+        }
+      };
+
+      const updateTimer = () => {
+        if (!startTimestamp) {
+          elapsedTime.textContent = "00:00";
+          return;
+        }
+        elapsedTime.textContent = formatElapsed(
+          (Date.now() - startTimestamp) / 1000,
+        );
+        paceValue.textContent = formatPace();
+      };
+
+      const handlePosition = (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+        const nextPoint = [latitude, longitude];
+
+        if (routePoints.length > 0) {
+          totalDistanceMeters += map.distance(
+            routePoints[routePoints.length - 1],
+            nextPoint,
+          );
+        } else {
+          startMarker = L.marker(nextPoint).addTo(map).bindPopup("Start point");
+        }
+
+        routePoints.push(nextPoint);
+        routeLine.setLatLngs(routePoints);
+
+        if (!liveMarker) {
+          liveMarker = L.circleMarker(nextPoint, {
+            radius: 8,
+            color: "#ffd36e",
+            fillColor: "#ffd36e",
+            fillOpacity: 0.9,
+          }).addTo(map);
+        } else {
+          liveMarker.setLatLng(nextPoint);
+        }
+
+        map.fitBounds(routeLine.getBounds(), {
+          padding: [28, 28],
+          maxZoom: 17,
+        });
+
+        updateStats(latitude, longitude);
+        mapLabel.textContent = `Accuracy ±${Math.round(accuracy)} m`;
+      };
+
+      const startTracking = () => {
+        if (!navigator.geolocation) {
+          setTrackingState(false, "Geolocation not supported");
+          return;
+        }
+
+        resetTracking();
+        totalDistanceMeters = 0;
+        routePoints = [];
+        routeLine.setLatLngs([]);
+        stepsValue.textContent = "0";
+        distanceValue.textContent = "0.00 km";
+        paceValue.textContent = "0:00";
+
+        if (startMarker) {
+          map.removeLayer(startMarker);
+          startMarker = null;
+        }
+
+        if (liveMarker) {
+          map.removeLayer(liveMarker);
+          liveMarker = null;
+        }
+
+        startTimestamp = Date.now();
+        updateTimer();
+        timerId = window.setInterval(updateTimer, 1000);
+        setTrackingState(true, "Tracking in progress");
+
+        watchId = navigator.geolocation.watchPosition(
+          handlePosition,
+          (error) => {
+            const messages = {
+              1: "Location permission denied",
+              2: "Location unavailable",
+              3: "Location request timed out",
+            };
+            setTrackingState(
+              false,
+              messages[error.code] || "Unable to fetch location",
+            );
+            resetTracking();
+          },
+          {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 10000,
+          },
+        );
+      };
+
+      const stopTracking = () => {
+        resetTracking();
+        setTrackingState(
+          false,
+          routePoints.length ? "Tracking stopped" : "Waiting to start",
+        );
+      };
+
+      const renderTodos = () => {
+        todoList.innerHTML = "";
+
+        if (!todos.length) {
+          const emptyItem = document.createElement("li");
+          emptyItem.className = "empty-state";
+          emptyItem.textContent = "No tasks yet. Add your first to do above.";
+          todoList.appendChild(emptyItem);
+        } else {
+          todos.forEach((todo) => {
+            const item = document.createElement("li");
+            item.className = `todo-item${todo.done ? " done" : ""}`;
+            item.innerHTML = `
+              <input type="checkbox" ${todo.done ? "checked" : ""} aria-label="Mark task complete" />
+              <div class="todo-text">
+                <strong>${todo.text}</strong>
+                <span>${todo.done ? "Completed" : "Pending"}</span>
+              </div>
+              <button class="todo-delete" type="button">Delete</button>
+            `;
+
+            const checkbox = item.querySelector('input[type="checkbox"]');
+            const deleteButton = item.querySelector(".todo-delete");
+
+            checkbox.addEventListener("change", () => {
+              todo.done = checkbox.checked;
+              renderTodos();
+            });
+
+            deleteButton.addEventListener("click", () => {
+              todos = todos.filter((entry) => entry.id !== todo.id);
+              renderTodos();
+            });
+
+            todoList.appendChild(item);
+          });
+        }
+
+        const completed = todos.filter((todo) => todo.done).length;
+        todoCount.textContent = `${todos.length} ${todos.length === 1 ? "task" : "tasks"}`;
+        todoDoneCount.textContent = `${completed} completed`;
+      };
+
+      const updateLoginNote = () => {
+        loginNote.textContent = savedUserName
+          ? `Current saved user: ${savedUserName}`
+          : "No name saved yet.";
+        userNameInput.value = savedUserName;
+      };
+
+      const openScreen = (screenName) => {
+        if (screenName === "Home") {
+          window.location.href = "{{ url_for('home') | safe }}";
+          return;
+        }
+
+        const showTodo = screenName === "To Do List";
+        const showAbout = screenName === "About Us";
+        const showLogin = screenName === "Login";
+        const showDashboard = !showTodo && !showAbout && !showLogin;
+
+        dashboardScreen.classList.toggle("active", showDashboard);
+        todoScreen.classList.toggle("active", showTodo);
+        aboutScreen.classList.toggle("active", showAbout);
+        loginScreen.classList.toggle("active", showLogin);
+        menuPanel.classList.remove("open");
+        menuButton.classList.remove("open");
+        if (showDashboard) {
+          window.setTimeout(() => map.invalidateSize(), 120);
+        }
+      };
+
+      menuButton.addEventListener("click", () => {
+        menuPanel.classList.toggle("open");
+        menuButton.classList.toggle("open");
+      });
+
+      document.addEventListener("click", (event) => {
+        if (
+          !menuPanel.contains(event.target) &&
+          !menuButton.contains(event.target)
+        ) {
+          menuPanel.classList.remove("open");
+          menuButton.classList.remove("open");
+        }
+      });
+
+      startButton.addEventListener("click", startTracking);
+      stopButton.addEventListener("click", stopTracking);
+
+      menuItems.forEach((item) => {
+        item.addEventListener("click", (e) => {
+          if (item.tagName === "A" || item.textContent.trim() === "Login") {
+            return;
+          }
+          openScreen(item.textContent.trim());
+        });
+      });
+
+      todoForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const value = todoInput.value.trim();
+        if (!value) return;
+
+        todos.unshift({
+          id: Date.now(),
+          text: value,
+          done: false,
+        });
+
+        todoInput.value = "";
+        renderTodos();
+      });
+
+      loginForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const value = userNameInput.value.trim();
+        if (!value) return;
+
+        savedUserName = value;
+        localStorage.setItem("fitnessEdUserName", savedUserName);
+        updateLoginNote();
+      });
+
+      renderTodos();
+      updateLoginNote();
+    </script>
+  </body>
+</html>

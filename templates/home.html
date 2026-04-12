@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FITNESS ED - Home</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #071311;
+        --bg-soft: #102523;
+        --panel: rgba(13, 29, 27, 0.92);
+        --panel-strong: rgba(18, 38, 35, 0.96);
+        --border: rgba(160, 255, 220, 0.14);
+        --text: #ecfff7;
+        --muted: #96b6ad;
+        --accent: #4ef2b3;
+        --accent-strong: #18c888;
+        --warning: #ffd36e;
+        --shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Space Grotesk", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(
+            circle at top,
+            rgba(78, 242, 179, 0.18),
+            transparent 28%
+          ),
+          radial-gradient(
+            circle at bottom right,
+            rgba(255, 211, 110, 0.12),
+            transparent 26%
+          ),
+          linear-gradient(180deg, #08110f 0%, var(--bg) 48%, #0c1c19 100%);
+      }
+
+      .app-shell {
+        width: min(100%, 460px);
+        min-height: 100vh;
+        margin: 0 auto;
+        padding: 1rem 1rem 2rem;
+        position: relative;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.3rem 0 1rem;
+        position: relative;
+        z-index: 50;
+      }
+
+      .brand {
+        font-size: 1.3rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+      }
+
+      .menu-button {
+        width: 48px;
+        height: 48px;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        transition:
+          transform 0.2s ease,
+          background 0.2s ease;
+      }
+
+      .menu-button span,
+      .menu-button span::before,
+      .menu-button span::after {
+        display: block;
+        width: 18px;
+        height: 2px;
+        background: currentColor;
+        border-radius: 999px;
+        position: relative;
+        transition:
+          transform 0.22s ease,
+          opacity 0.22s ease,
+          top 0.22s ease;
+      }
+
+      .menu-button span::before,
+      .menu-button span::after {
+        content: "";
+        position: absolute;
+        left: 0;
+      }
+
+      .menu-button span::before {
+        top: -6px;
+      }
+      .menu-button span::after {
+        top: 6px;
+      }
+
+      .menu-button.open span {
+        background: transparent;
+      }
+      .menu-button.open span::before {
+        top: 0;
+        transform: rotate(45deg);
+      }
+      .menu-button.open span::after {
+        top: 0;
+        transform: rotate(-45deg);
+      }
+
+      .menu-panel {
+        position: absolute;
+        top: 4.6rem;
+        right: 1rem;
+        width: 220px;
+        padding: 0.9rem;
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        background: var(--panel-strong);
+        box-shadow: var(--shadow);
+        opacity: 0;
+        transform: translateY(-8px);
+        pointer-events: none;
+        transition:
+          opacity 0.25s ease,
+          transform 0.25s ease;
+        z-index: 120;
+      }
+
+      .menu-panel.open {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+
+      .menu-panel button,
+      .menu-panel a {
+        display: block;
+        width: 100%;
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .menu-panel button {
+        padding: 0.9rem 1rem;
+        border: 0;
+        border-radius: 14px;
+        background: transparent;
+        text-align: left;
+        font: inherit;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .menu-panel button:hover {
+        background: rgba(78, 242, 179, 0.08);
+      }
+
+      .hero-card {
+        padding: 2rem 1.5rem;
+        border-radius: 28px;
+        background: linear-gradient(
+          180deg,
+          rgba(14, 35, 31, 0.96),
+          rgba(10, 24, 22, 0.94)
+        );
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        text-align: center;
+      }
+
+      .eyebrow {
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-size: 0.72rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .hero-card h1 {
+        margin: 0;
+        font-size: 2.2rem;
+        line-height: 1.1;
+      }
+
+      .hero-card p {
+        margin-top: 1rem;
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 1rem;
+      }
+
+      .quick-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+
+      .action-card {
+        padding: 1.2rem;
+        border-radius: 24px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.04);
+        text-decoration: none;
+        color: inherit;
+        transition:
+          transform 0.2s ease,
+          border-color 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .action-card:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+      }
+
+      .icon-circle {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: rgba(78, 242, 179, 0.1);
+        color: var(--accent);
+        display: grid;
+        place-items: center;
+        font-size: 1.2rem;
+      }
+
+      .action-info strong {
+        display: block;
+        font-size: 1.1rem;
+        margin-bottom: 0.2rem;
+      }
+
+      .action-info span {
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+
+      .footer-note {
+        margin-top: 2rem;
+        text-align: center;
+        font-size: 0.8rem;
+        color: var(--muted);
+        opacity: 0.6;
+      }
+
+      @media (min-width: 760px) {
+        .app-shell {
+          width: min(100% - 2rem, 600px);
+        }
+        .quick-actions {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand">FITNESS ED</div>
+        <button class="menu-button" type="button" id="menuToggle">
+          <span></span>
+        </button>
+        <div class="menu-panel" id="menuPanel">
+          <a href="{{ url_for('home') }}"
+            ><button type="button">Home</button></a
+          >
+          <a href="{{ url_for('dashboard') }}"
+            ><button type="button">Dashboard</button></a
+          >
+          <button type="button">History</button>
+          <button type="button">To Do List</button>
+          <button type="button">About Us</button>
+          <a href="{{ url_for('auth') }}"
+            ><button type="button">Login</button></a
+          >
+        </div>
+      </header>
+
+      <section class="hero-card">
+        <div class="eyebrow">Welcome Back</div>
+        <h1 id="welcomeUser">
+          {% if username %} Hello, {{ name }}! {% else %} Hello, Athlete! {%
+          endif %}
+        </h1>
+        <p>Your fitness journey continues. Ready to track your next move?</p>
+      </section>
+
+      <div class="quick-actions">
+        <a href="{{ url_for('dashboard') }}" class="action-card">
+          <div class="icon-circle">📍</div>
+          <div class="action-info">
+            <strong>Go to Tracker</strong>
+            <span>Start a live GPS session</span>
+          </div>
+        </a>
+
+        <a href="#" class="action-card" onclick="alert('Feature coming soon!')">
+          <div class="icon-circle">✅</div>
+          <div class="action-info">
+            <strong>Daily Tasks</strong>
+            <span>Check your To-Do list</span>
+          </div>
+        </a>
+
+        <a href="#" class="action-card" onclick="alert('Feature coming soon!')">
+          <div class="icon-circle">📊</div>
+          <div class="action-info">
+            <strong>History</strong>
+            <span>Review past activities</span>
+          </div>
+        </a>
+
+        <a href="#" class="action-card" onclick="alert('Feature coming soon!')">
+          <div class="icon-circle">👤</div>
+          <div class="action-info">
+            <strong>Profile</strong>
+            <span>Manage your settings</span>
+          </div>
+        </a>
+      </div>
+
+      <footer class="footer-note">FITNESS ED &copy; 2026 • Keep Moving</footer>
+    </main>
+
+    <script>
+      const menuToggle = document.getElementById("menuToggle");
+      const menuPanel = document.getElementById("menuPanel");
+      const welcomeUser = document.getElementById("welcomeUser");
+
+      menuToggle.addEventListener("click", () => {
+        menuToggle.classList.toggle("open");
+        menuPanel.classList.toggle("open");
+      });
+
+      // Close menu when clicking outside
+      document.addEventListener("click", (e) => {
+        if (!menuToggle.contains(e.target) && !menuPanel.contains(e.target)) {
+          menuToggle.classList.remove("open");
+          menuPanel.classList.remove("open");
+        }
+      });
+    </script>
+  </body>
+</html>
