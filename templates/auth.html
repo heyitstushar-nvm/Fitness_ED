@@ -1,163 +1,228 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Join FITNESS ED</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
-    <style>
-      :root {
-        --bg: #071311;
-        --panel: rgba(13, 29, 27, 0.96);
-        --border: rgba(160, 255, 220, 0.14);
-        --text: #ecfff7;
-        --muted: #96b6ad;
-        --accent: #4ef2b3;
-        --shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
-      }
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FITNESS ED - Authentic Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+</head>
+<body>
 
-      body {
-        margin: 0;
-        min-height: 100vh;
-        font-family: "Space Grotesk", sans-serif;
-        color: var(--text);
-        background: radial-gradient(circle at top, rgba(78, 242, 179, 0.15), transparent 30%), var(--bg);
-        display: grid;
-        place-items: center;
-        padding: 1rem;
-      }
-
-      .auth-container {
-        width: 100%;
-        max-width: 400px;
-        background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: 32px;
-        padding: 2.5rem 2rem;
-        box-shadow: var(--shadow);
-      }
-
-      .header { text-align: center; margin-bottom: 2rem; }
-      .header h1 { font-size: 1.8rem; margin: 0; letter-spacing: 1px; }
-      .header p { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
-
-      .form-group { margin-bottom: 1.2rem; }
-      label { display: block; font-size: 0.8rem; color: var(--accent); text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 1px; }
-      
-      input {
-        width: 100%;
-        padding: 1rem;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        color: var(--text);
-        font-family: inherit;
-        transition: 0.2s;
-        box-sizing: border-box;
-      }
-
-      input:focus { outline: none; border-color: var(--accent); background: rgba(255, 255, 255, 0.08); }
-
-      .btn-primary {
-        width: 100%;
-        padding: 1rem;
-        background: var(--accent);
-        border: none;
-        border-radius: 16px;
-        color: #042417;
-        font-weight: 700;
-        font-size: 1rem;
-        cursor: pointer;
-        margin-top: 1rem;
-        transition: transform 0.2s;
-      }
-
-      .btn-primary:active { transform: scale(0.98); }
-
-      .toggle-text {
-        text-align: center;
-        margin-top: 1.5rem;
-        font-size: 0.85rem;
-        color: var(--muted);
-      }
-
-      .toggle-text span { color: var(--accent); cursor: pointer; font-weight: 700; }
-      .hidden { display: none; }
-    </style>
-  </head>
-  <body>
-
-    <div class="auth-container">
-      <div class="header">
-        <h1 id="authTitle">Create Account</h1>
-        <p id="authSubtitle">Start your fitness journey today.</p>
-      </div>
-
-      <form id="authForm" action="/register" method="POST">
-        
-        <div class="form-group" id="nameGroup">
-          <label>Full Name</label>
-          <input type="text" name="username" id="regName" placeholder="Full Name" required>
-        </div>
-
-        <div class="form-group">
-          <label>Email Address</label>
-          <input type="email" name="email" placeholder="Email" required>
-        </div>
-
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" name="password" placeholder="Password" required>
-        </div>
-
-        <button type="submit" class="btn-primary" id="submitBtn">Sign Up</button>
-      </form>
-
-      <div class="toggle-text">
-        <span id="toggleLink">Already have an account? Log In</span>
-      </div>
+<div class="auth-page-wrapper">
+  
+  <!-- Left Side: Interactive Visual -->
+  <div class="auth-visual">
+    <div id="canvas-container-auth"></div>
+    <div class="visual-content">
+      <h1>Unleash Your<br>Potential.</h1>
+      <p>Securely log in to track every metric, analyze every workout, and transform your baseline.</p>
     </div>
+  </div>
 
-    <script>
-      const authTitle = document.getElementById('authTitle');
-      const authSubtitle = document.getElementById('authSubtitle');
-      const authForm = document.getElementById('authForm');
-      const nameGroup = document.getElementById('nameGroup');
-      const submitBtn = document.getElementById('submitBtn');
-      const toggleLink = document.getElementById('toggleLink');
-      const regNameInput = document.getElementById('regName');
+  <!-- Right Side: Clean Form Layout -->
+  <div class="auth-form-wrapper">
+    <div class="auth-form-container">
+      <div style="margin-bottom: 2rem;">
+        <a href="{{ url_for('landing') }}" style="text-decoration:none; color:var(--text); font-weight:700; letter-spacing:2px;">FITNESS<span style="color:var(--accent);">ED</span></a>
+      </div>
 
-      let isLogin = false;
+      <h2 id="formTitle">Welcome Back</h2>
+      <p id="formSubtitle">Securely sign in to your dashboard</p>
 
-      toggleLink.addEventListener('click', () => {
-        isLogin = !isLogin;
+      <form id="authForm" action="/login" method="POST">
+        
+        <div class="input-group" id="usernameGroup" style="display:none;">
+          <input type="text" name="username" id="username" placeholder=" " />
+          <label for="username">Athlete Name</label>
+        </div>
 
-        if (isLogin) {
-          authTitle.innerText = "Welcome Back";
-          authSubtitle.innerText = "Log in to track your progress.";
-          submitBtn.innerText = "Log In";
-          toggleLink.innerText = "New here? Create an account";
-          nameGroup.classList.add('hidden');
-          regNameInput.removeAttribute('required');
-          authForm.action = "/login"; 
+        <div class="input-group">
+          <input type="email" name="email" id="email" required placeholder=" " />
+          <label for="email">Email Address</label>
+        </div>
+
+        <div class="input-group">
+          <input type="password" name="password" id="password" required placeholder=" " />
+          <label for="password">Password</label>
+          <button type="button" class="btn-toggle-pass" id="btnTogglePass">👁</button>
+        </div>
+
+        <div class="form-options">
+          <label class="remember-me">
+            <input type="checkbox" /> Remember me
+          </label>
+          <a href="#" class="forgot-link">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="btn-submit" id="btnSubmit">
+          <span class="btn-text" id="btnText">Log In</span>
+          <span class="btn-loader"></span>
+        </button>
+
+        <div class="social-login">
+          <p>Or continue with</p>
+          <div class="social-btns">
+            <button type="button" class="btn-social">Google</button>
+            <button type="button" class="btn-social">Apple</button>
+          </div>
+        </div>
+
+        <p class="auth-switch">
+          <span id="switchPrompt">Don't have an account?</span> 
+          <a href="#" id="toggleMode">Sign up</a>
+        </p>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+  // DOM Elements
+  const authForm = document.getElementById("authForm");
+  const toggleMode = document.getElementById("toggleMode");
+  const usernameGroup = document.getElementById("usernameGroup");
+  const formTitle = document.getElementById("formTitle");
+  const formSubtitle = document.getElementById("formSubtitle");
+  const btnText = document.getElementById("btnText");
+  const switchPrompt = document.getElementById("switchPrompt");
+  const btnSubmit = document.getElementById("btnSubmit");
+  const passwordInput = document.getElementById("password");
+  const btnTogglePass = document.getElementById("btnTogglePass");
+
+  let isLogin = true;
+
+  // Toggle Login/Register
+  toggleMode.addEventListener('click', (e) => {
+    e.preventDefault();
+    isLogin = !isLogin;
+    
+    // Slight fade out transition effect on switch
+    authForm.style.opacity = '0.5';
+    setTimeout(() => {
+        if(isLogin) {
+            usernameGroup.style.display = "none";
+            document.getElementById('username').removeAttribute('required');
+            authForm.action = "/login";
+            formTitle.innerText = "Welcome Back";
+            formSubtitle.innerText = "Securely sign in to your dashboard";
+            btnText.innerText = "Log In";
+            toggleMode.innerText = "Sign up";
+            switchPrompt.innerText = "Don't have an account?";
         } else {
-          authTitle.innerText = "Create Account";
-          authSubtitle.innerText = "Start your fitness journey today.";
-          submitBtn.innerText = "Sign Up";
-          toggleLink.innerText = "Already have an account? Log In";
-          nameGroup.classList.remove('hidden');
-          regNameInput.setAttribute('required', '');
-          authForm.action = "/register"; 
+            usernameGroup.style.display = "block";
+            document.getElementById('username').setAttribute('required', 'required');
+            authForm.action = "/register";
+            formTitle.innerText = "Join the Movement";
+            formSubtitle.innerText = "Create an account to track your progress";
+            btnText.innerText = "Create Account";
+            toggleMode.innerText = "Log in";
+            switchPrompt.innerText = "Already have an account?";
         }
-      });
+        authForm.style.opacity = '1';
+    }, 150);
+  });
 
-      authForm.addEventListener('submit', () => {
-        if (!isLogin) {
-          localStorage.setItem("fitnessEdUserName", regNameInput.value);
-        }
-      });
-    </script>
-  </body>
+  // Password Visibility Toggle
+  btnTogglePass.addEventListener('click', () => {
+    if(passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        btnTogglePass.style.color = 'var(--accent)';
+    } else {
+        passwordInput.type = 'password';
+        btnTogglePass.style.color = 'var(--muted)';
+    }
+  });
+
+  // Submit Loading Animation
+  authForm.addEventListener('submit', () => {
+     btnSubmit.classList.add('loading');
+  });
+
+  // Three.js Interactive 3D Background Setup
+  const init3DAuth = () => {
+    const container = document.getElementById('canvas-container-auth');
+    if(!container) return; // for mobile when it's display:none
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
+    
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    container.appendChild(renderer.domElement);
+
+    // Create a complex TorusKnot representing continuous loop/infinity/fitness muscle fibers
+    const geometry = new THREE.TorusKnotGeometry(7, 1.5, 120, 16);
+    
+    const wireframeMaterial = new THREE.MeshBasicMaterial({ 
+      color: 0x4ef2b3, wireframe: true, transparent: true, opacity: 0.15 
+    });
+    
+    const solidMaterial = new THREE.MeshPhongMaterial({
+      color: 0x071311, shininess: 80, specular: 0x28a0f0, flatShading: true
+    });
+
+    const mesh = new THREE.Mesh(geometry, solidMaterial);
+    const wireframe = new THREE.Mesh(geometry, wireframeMaterial);
+    wireframe.scale.set(1.02, 1.02, 1.02);
+    
+    const group = new THREE.Group();
+    group.add(mesh);
+    group.add(wireframe);
+    scene.add(group);
+
+    // Dynamic Lighting
+    const light1 = new THREE.PointLight(0x4ef2b3, 1, 100);
+    light1.position.set(10, 10, 10);
+    scene.add(light1);
+    
+    const light2 = new THREE.PointLight(0x28a0f0, 1, 100);
+    light2.position.set(-10, -10, 10);
+    scene.add(light2);
+
+    camera.position.z = 25;
+
+    // Mouse Interaction
+    let targetX = 0; let targetY = 0;
+    document.addEventListener('mousemove', (e) => {
+      targetX = (e.clientX - window.innerWidth / 2) * 0.0015;
+      targetY = (e.clientY - window.innerHeight / 2) * 0.0015;
+    });
+
+    const animate = function () {
+      requestAnimationFrame(animate);
+      
+      // Idle spin + Parallax
+      group.rotation.x += 0.001;
+      group.rotation.y += 0.002;
+      
+      // Smooth interpolation for mouse track
+      group.rotation.x += (targetY - group.rotation.x) * 0.05;
+      group.rotation.y += (targetX - group.rotation.y) * 0.05;
+
+      renderer.render(scene, camera);
+    };
+
+    window.addEventListener('resize', () => {
+      if(container.clientWidth > 0) {
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+      }
+    });
+
+    animate();
+  };
+
+  window.addEventListener('load', init3DAuth);
+</script>
+
+</body>
 </html>
