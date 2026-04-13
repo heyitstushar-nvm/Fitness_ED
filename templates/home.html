@@ -1,369 +1,238 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FITNESS ED - Home</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --bg: #071311;
-        --bg-soft: #102523;
-        --panel: rgba(13, 29, 27, 0.92);
-        --panel-strong: rgba(18, 38, 35, 0.96);
-        --border: rgba(160, 255, 220, 0.14);
-        --text: #ecfff7;
-        --muted: #96b6ad;
-        --accent: #4ef2b3;
-        --accent-strong: #18c888;
-        --warning: #ffd36e;
-        --shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
-      }
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FITNESS ED - Control Center</title>
+  <!-- Load Main UI Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Custom Stylesheets -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="dashboard-body">
 
-      * {
-        box-sizing: border-box;
-      }
+<div class="saas-layout">
+  <!-- Left Nav Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand"><a href="{{ url_for('landing') }}" style="color:inherit; text-decoration:none;">FITNESS<span class="hl">ED</span></a></div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('home') }}" class="active"><i>🏠</i> Dashboard</a>
+      <a href="{{ url_for('dashboard') }}"><i>📍</i> Tracker Workspace</a>
+      <a href="{{ url_for('todo') }}"><i>✅</i> Daily Tasks</a>
+      <a href="#" onclick="showToast('Under Development', 'Nutrition logging is launching soon.')"><i>🥗</i> Nutrition Hub</a>
+      <a href="#" onclick="showToast('Under Development', 'Analytics core is compiling.')"><i>📈</i> Analytics Core</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <a href="{{ url_for('logout') }}" class="logout"><i>🚪</i> Secure Logout</a>
+    </div>
+  </aside>
 
-      body {
-        margin: 0;
-        min-height: 100vh;
-        font-family: "Space Grotesk", sans-serif;
-        color: var(--text);
-        background:
-          radial-gradient(
-            circle at top,
-            rgba(78, 242, 179, 0.18),
-            transparent 28%
-          ),
-          radial-gradient(
-            circle at bottom right,
-            rgba(255, 211, 110, 0.12),
-            transparent 26%
-          ),
-          linear-gradient(180deg, #08110f 0%, var(--bg) 48%, #0c1c19 100%);
-      }
-
-      .app-shell {
-        width: min(100%, 460px);
-        min-height: 100vh;
-        margin: 0 auto;
-        padding: 1rem 1rem 2rem;
-        position: relative;
-      }
-
-      .topbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0.3rem 0 1rem;
-        position: relative;
-        z-index: 50;
-      }
-
-      .brand {
-        font-size: 1.3rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-      }
-
-      .menu-button {
-        width: 48px;
-        height: 48px;
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        background: rgba(255, 255, 255, 0.04);
-        color: var(--text);
-        display: grid;
-        place-items: center;
-        cursor: pointer;
-        transition:
-          transform 0.2s ease,
-          background 0.2s ease;
-      }
-
-      .menu-button span,
-      .menu-button span::before,
-      .menu-button span::after {
-        display: block;
-        width: 18px;
-        height: 2px;
-        background: currentColor;
-        border-radius: 999px;
-        position: relative;
-        transition:
-          transform 0.22s ease,
-          opacity 0.22s ease,
-          top 0.22s ease;
-      }
-
-      .menu-button span::before,
-      .menu-button span::after {
-        content: "";
-        position: absolute;
-        left: 0;
-      }
-
-      .menu-button span::before {
-        top: -6px;
-      }
-      .menu-button span::after {
-        top: 6px;
-      }
-
-      .menu-button.open span {
-        background: transparent;
-      }
-      .menu-button.open span::before {
-        top: 0;
-        transform: rotate(45deg);
-      }
-      .menu-button.open span::after {
-        top: 0;
-        transform: rotate(-45deg);
-      }
-
-      .menu-panel {
-        position: absolute;
-        top: 4.6rem;
-        right: 1rem;
-        width: 220px;
-        padding: 0.9rem;
-        border: 1px solid var(--border);
-        border-radius: 22px;
-        background: var(--panel-strong);
-        box-shadow: var(--shadow);
-        opacity: 0;
-        transform: translateY(-8px);
-        pointer-events: none;
-        transition:
-          opacity 0.25s ease,
-          transform 0.25s ease;
-        z-index: 120;
-      }
-
-      .menu-panel.open {
-        opacity: 1;
-        transform: translateY(0);
-        pointer-events: auto;
-      }
-
-      .menu-panel button,
-      .menu-panel a {
-        display: block;
-        width: 100%;
-        text-decoration: none;
-        color: inherit;
-      }
-
-      .menu-panel button {
-        padding: 0.9rem 1rem;
-        border: 0;
-        border-radius: 14px;
-        background: transparent;
-        text-align: left;
-        font: inherit;
-        cursor: pointer;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .menu-panel button:hover {
-        background: rgba(78, 242, 179, 0.08);
-      }
-
-      .hero-card {
-        padding: 2rem 1.5rem;
-        border-radius: 28px;
-        background: linear-gradient(
-          180deg,
-          rgba(14, 35, 31, 0.96),
-          rgba(10, 24, 22, 0.94)
-        );
-        border: 1px solid var(--border);
-        box-shadow: var(--shadow);
-        text-align: center;
-      }
-
-      .eyebrow {
-        color: var(--accent);
-        text-transform: uppercase;
-        letter-spacing: 0.14em;
-        font-size: 0.72rem;
-        margin-bottom: 0.5rem;
-      }
-
-      .hero-card h1 {
-        margin: 0;
-        font-size: 2.2rem;
-        line-height: 1.1;
-      }
-
-      .hero-card p {
-        margin-top: 1rem;
-        color: var(--muted);
-        line-height: 1.6;
-        font-size: 1rem;
-      }
-
-      .quick-actions {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1rem;
-        margin-top: 1.5rem;
-      }
-
-      .action-card {
-        padding: 1.2rem;
-        border-radius: 24px;
-        border: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.04);
-        text-decoration: none;
-        color: inherit;
-        transition:
-          transform 0.2s ease,
-          border-color 0.2s ease;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-      }
-
-      .action-card:hover {
-        border-color: var(--accent);
-        transform: translateY(-2px);
-      }
-
-      .icon-circle {
-        width: 48px;
-        height: 48px;
-        border-radius: 14px;
-        background: rgba(78, 242, 179, 0.1);
-        color: var(--accent);
-        display: grid;
-        place-items: center;
-        font-size: 1.2rem;
-      }
-
-      .action-info strong {
-        display: block;
-        font-size: 1.1rem;
-        margin-bottom: 0.2rem;
-      }
-
-      .action-info span {
-        font-size: 0.85rem;
-        color: var(--muted);
-      }
-
-      .footer-note {
-        margin-top: 2rem;
-        text-align: center;
-        font-size: 0.8rem;
-        color: var(--muted);
-        opacity: 0.6;
-      }
-
-      @media (min-width: 760px) {
-        .app-shell {
-          width: min(100% - 2rem, 600px);
-        }
-        .quick-actions {
-          grid-template-columns: 1fr 1fr;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <main class="app-shell">
-      <header class="topbar">
-        <div class="brand">FITNESS ED</div>
-        <button class="menu-button" type="button" id="menuToggle">
-          <span></span>
-        </button>
-        <div class="menu-panel" id="menuPanel">
-          <a href="{{ url_for('home') }}"
-            ><button type="button">Home</button></a
-          >
-          <a href="{{ url_for('dashboard') }}"
-            ><button type="button">Dashboard</button></a
-          >
-          <button type="button">History</button>
-          <button type="button">To Do List</button>
-          <button type="button">About Us</button>
-          <a href="{{ url_for('auth') }}"
-            ><button type="button">Login</button></a
-          >
+  <!-- Main Central Interface -->
+  <main class="main-content">
+    
+    <!-- Top Configuration Bar -->
+    <header class="topbar-glass">
+      <div class="search-wrap">
+        <input type="text" placeholder="Search workouts, tasks, or metrics..." />
+      </div>
+      <div class="user-menu" onclick="showToast('Profile Menu', 'Account settings expanding...')">
+        <span class="user-name">{{ name }}</span>
+        <div class="avatar">
+           <span>{{ name[0] }}</span>
         </div>
-      </header>
+      </div>
+    </header>
 
-      <section class="hero-card">
-        <div class="eyebrow">Welcome Back</div>
-        <h1 id="welcomeUser">
-          {% if username %} Hello, {{ name }}! {% else %} Hello, Athlete! {%
-          endif %}
-        </h1>
-        <p>Your fitness journey continues. Ready to track your next move?</p>
+    <!-- Deep Dashboard Grid Area -->
+    <div class="dashboard-scroll">
+      
+      <!-- Welcome Hero Array -->
+      <section class="welcome-hero">
+        <div class="hero-info">
+          <h1>Welcome back, {{ name }} 👋</h1>
+          <p>You are in the top 15% of active users this week. Stay consistent.</p>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-pill">
+            <span class="stat-lbl">Calories Burned</span>
+            <span class="stat-val">3,240</span>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-lbl">Sessions</span>
+            <span class="stat-val">12</span>
+          </div>
+          <div class="stat-pill accent">
+            <span class="stat-lbl">🔥 Current Streak</span>
+            <span class="stat-val">5 Days</span>
+          </div>
+        </div>
       </section>
 
-      <div class="quick-actions">
-        <a href="{{ url_for('dashboard') }}" class="action-card">
-          <div class="icon-circle">📍</div>
-          <div class="action-info">
-            <strong>Go to Tracker</strong>
-            <span>Start a live GPS session</span>
-          </div>
-        </a>
+      <!-- Advanced Widget Grid -->
+      <div class="dash-grid">
+        
+        <!-- Interactive Analytics Chart -->
+        <div class="widget chart-widget">
+           <h3>Activity Velocity (7 Days)</h3>
+           <div style="position: relative; height:250px; width:100%;">
+             <canvas id="progressChart"></canvas>
+           </div>
+        </div>
 
-        <a href="#" class="action-card" onclick="alert('Feature coming soon!')">
-          <div class="icon-circle">✅</div>
-          <div class="action-info">
-            <strong>Daily Tasks</strong>
-            <span>Check your To-Do list</span>
-          </div>
-        </a>
+        <!-- Bio Snapshot -->
+        <div class="widget profile-widget">
+           <h3>Biometric Snapshot</h3>
+           <div class="snap-content">
+              <div class="snap-avatar">{{ name[0] }}</div>
+              <h4>{{ name }}</h4>
+              <p>Objective: Hypertrophy &amp; Endurance</p>
+              <div style="margin-top: 1rem; font-size: 0.9rem; color: var(--muted);">
+                Phase 2 Initialization Complete<br>
+                <strong>System Readiness: 98%</strong>
+              </div>
+           </div>
+        </div>
 
-        <a href="#" class="action-card" onclick="alert('Feature coming soon!')">
-          <div class="icon-circle">📊</div>
-          <div class="action-info">
-            <strong>History</strong>
-            <span>Review past activities</span>
-          </div>
-        </a>
+        <!-- Quick Action Grid -->
+        <div class="widget actions-widget">
+           <h3>Quick Controls</h3>
+           <div class="actions-grid">
+              <a href="{{ url_for('dashboard') }}" class="action-btn">
+                <div class="icon">🏃</div>
+                <span>Start Session</span>
+              </a>
+              <a href="{{ url_for('todo') }}" class="action-btn">
+                <div class="icon">📝</div>
+                <span>Log Activity</span>
+              </a>
+              <button class="action-btn" onclick="showToast('Syncing Data', 'Downloading biometric logs...')">
+                <div class="icon">📊</div>
+                <span>View Reports</span>
+              </button>
+              <button class="action-btn" onclick="showToast('AI Analyzing', 'Drafting customized routines...')">
+                <div class="icon">🗺️</div>
+                <span>Explore Plans</span>
+              </button>
+           </div>
+        </div>
 
-        <a href="#" class="action-card" onclick="alert('Feature coming soon!')">
-          <div class="icon-circle">👤</div>
-          <div class="action-info">
-            <strong>Profile</strong>
-            <span>Manage your settings</span>
+        <!-- Algorithmic Recommendations -->
+        <div class="widget recom-widget">
+          <h3>Algorithmic Suggestions</h3>
+          <div class="recom-card">
+             <div>
+               <h4>HIIT Cardio Burst</h4>
+               <p>20 Mins • High Intensity • Based on your low cardio volume</p>
+             </div>
+             <button onclick="showToast('Session Ready', 'Initializing HIIT tracking...')">Start</button>
           </div>
-        </a>
+          <div class="recom-card">
+             <div>
+               <h4>Core & Flexibility</h4>
+               <p>15 Mins • Recovery • Suggested post-workout stretch</p>
+             </div>
+             <button onclick="showToast('Session Ready', 'Initializing Recovery tracking...')">Start</button>
+          </div>
+        </div>
+
+        <!-- Gamification / Streaks -->
+        <div class="widget achieve-widget">
+          <h3>Achievements</h3>
+          <div class="badge-list">
+             <div class="badge-item">
+               <div class="badge-icon">🔥</div>
+               <span>5 Day Unbroken Streak</span>
+             </div>
+             <div class="badge-item">
+               <div class="badge-icon">🏅</div>
+               <span>First Milestone Complete</span>
+             </div>
+             <div class="badge-item locked">
+               <div class="badge-icon">🔒</div>
+               <span>10K Mastery Core (Locked)</span>
+             </div>
+          </div>
+        </div>
+
       </div>
+    </div>
+  </main>
+</div>
 
-      <footer class="footer-note">FITNESS ED &copy; 2026 • Keep Moving</footer>
-    </main>
+<!-- Scripts including Chart.js rendering -->
+<script src="{{ url_for('static', filename='main.js') }}"></script>
+<script>
+  // Initialize Chart.js with extremely premium SaaS aesthetics
+  const ctx = document.getElementById('progressChart').getContext('2d');
+  
+  // Neon gradient fill beneath the line
+  const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+  gradient.addColorStop(0, 'rgba(78, 242, 179, 0.4)');
+  gradient.addColorStop(1, 'rgba(78, 242, 179, 0.0)');
 
-    <script>
-      const menuToggle = document.getElementById("menuToggle");
-      const menuPanel = document.getElementById("menuPanel");
-      const welcomeUser = document.getElementById("welcomeUser");
-
-      menuToggle.addEventListener("click", () => {
-        menuToggle.classList.toggle("open");
-        menuPanel.classList.toggle("open");
-      });
-
-      // Close menu when clicking outside
-      document.addEventListener("click", (e) => {
-        if (!menuToggle.contains(e.target) && !menuPanel.contains(e.target)) {
-          menuToggle.classList.remove("open");
-          menuPanel.classList.remove("open");
+  const progressChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      datasets: [{
+        label: 'Active Minutes',
+        data: [45, 60, 0, 90, 30, 45, 75],
+        borderColor: '#4ef2b3',
+        backgroundColor: gradient,
+        borderWidth: 3,
+        tension: 0.4, // Smooth curved lines
+        pointBackgroundColor: '#071311',
+        pointBorderColor: '#4ef2b3',
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(4, 13, 11, 0.9)',
+          titleColor: '#fff',
+          bodyColor: '#4ef2b3',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          padding: 12,
+          displayColors: false,
+          callbacks: {
+            label: function(context) {
+              return context.parsed.y + ' minutes';
+            }
+          }
         }
-      });
-    </script>
-  </body>
+      },
+      scales: {
+        x: {
+          grid: { display: false, drawBorder: false },
+          ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Space Grotesk' } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
+          ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Space Grotesk' }, stepSize: 30 }
+        }
+      },
+      animation: {
+        duration: 1500,
+        easing: 'easeOutQuart'
+      }
+    }
+  });
+</script>
+
+</body>
 </html>

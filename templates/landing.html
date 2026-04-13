@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FITNESS ED - Redefine Your Limits</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}">
+</head>
+<body class="landing-body">
+  
+  <div class="glow-orb top"></div>
+  <div class="glow-orb right"></div>
+
+  <!-- Navigation -->
+  <nav class="navbar" id="navbar">
+    <a href="#" class="nav-brand">FITNESS<span>ED</span></a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#explore">Explore</a>
+      <a href="#about">About</a>
+    </div>
+    <a href="{{ url_for('auth') }}" class="btn-nav-auth">Sign In</a>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">🚀 Next-Gen Tracking Platform</div>
+      <h1>Redefine Your<br>Physical Limits.</h1>
+      <p>The ultimate fitness hub that merges cutting-edge data analytics with beautifully intuitive design. Transform your body, track every step, and conquer your goals.</p>
+      <div class="hero-ctas">
+        <a href="{{ url_for('auth') }}" class="btn-primary">Get Started Free</a>
+        <a href="#features" class="btn-outline">Explore Features</a>
+      </div>
+    </div>
+    <div class="hero-3d-wrapper">
+       <div id="canvas-container"></div>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section id="features" class="section">
+    <div class="section-header">
+      <h2 class="section-title">Core Capabilities</h2>
+      <p class="section-subtitle">Everything you need to build the perfect routine, engineered into a powerful, data-driven experience.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">📍</div>
+        <h3>Live GPS Tracking</h3>
+        <p>Real-time location, pace, and step analysis mapped out beautifully as you move.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✅</div>
+        <h3>Smart Daily Tasks</h3>
+        <p>A robust task manager seamlessly integrated with your workout regimens and routines.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Deep Analytics</h3>
+        <p>Visualize your progress through interactive charts tracking miles, weights, and momentum.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💪</div>
+        <h3>Personalized Plans</h3>
+        <p>Tailored daily splits that adapt dynamically as your baseline metrics improve over time.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🥗</div>
+        <h3>Nutrition Sync</h3>
+        <p>Connect your meals and macros directly to your daily performance outputs.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔐</div>
+        <h3>Secure Vault</h3>
+        <p>Industry-standard data protection ensuring your bodily metrics are entirely private.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Explore Section -->
+  <section id="explore" class="section">
+    <div class="explore-preview">
+      <div class="explore-text">
+        <h2 class="section-title">A dashboard designed for action.</h2>
+        <p>No clutter. No confusing menus. Witness your current status the second you log in, powered by the fastest interface elements standard in top-tier SaaS platforms.</p>
+        <a href="{{ url_for('auth') }}" class="btn-primary" style="margin-top: 1rem;">View the Dashboard</a>
+      </div>
+      <div class="explore-cards">
+        <div class="mock-ui-card">
+          <span style="color:var(--accent); font-weight:700; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase;">Tracker</span>
+          <h3 style="margin: 0.5rem 0 0;">Route mapping active.</h3>
+          <p style="color:var(--muted); font-size:0.9rem; margin:0.5rem 0 0;">Locking onto GPS coordinates...</p>
+        </div>
+        <div class="mock-ui-card" style="transform: translateX(-20px);">
+          <span style="color:var(--warning); font-weight:700; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase;">Progress</span>
+          <h3 style="margin: 0.5rem 0 0;">Weekly targets: 80% met</h3>
+          <p style="color:var(--muted); font-size:0.9rem; margin:0.5rem 0 0;">You're 2 runs away from a new streak.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Choose Us -->
+  <section class="section" style="background: rgba(255,255,255,0.02); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+    <div class="stats-row">
+      <div class="stat-box">
+        <h4>10x</h4>
+        <p>Faster Interactions</p>
+      </div>
+      <div class="stat-box">
+        <h4>100%</h4>
+        <p>Uptime Tracking</p>
+      </div>
+      <div class="stat-box">
+        <h4>Zero</h4>
+        <p>Distractions</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Developers -->
+  <section id="about" class="section">
+    <div class="section-header">
+      <h2 class="section-title">Built With Purpose</h2>
+      <p class="section-subtitle">Forged by people who believe that health software should be as powerful as developer tools.</p>
+    </div>
+    <div class="dev-card">
+      <div class="dev-avatar">👨‍💻</div>
+      <h3>The Architect</h3>
+      <span>Full Stack Developer</span>
+      <p style="color: var(--muted); line-height:1.6; margin-bottom: 1.5rem;">"We envisioned an application that didn't just log data, but actually made examining your progress feel premium and engaging."</p>
+      <div class="dev-social">
+        <a href="#">GitHub</a> &bull; <a href="#">LinkedIn</a> &bull; <a href="#">Portfolio</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section">
+    <div class="cta-banner">
+      <h2>Start Your Fitness Journey Today</h2>
+      <p>Join the movement. Transform your daily routine with data-driven insights and a community that pushes you to excel.</p>
+      <a href="{{ url_for('auth') }}" class="btn-primary" style="padding: 1.5rem 4rem; font-size: 1.2rem;">Join Now</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="landing-footer">
+    <div class="footer-content">
+      <div class="footer-col" style="max-width: 300px;">
+        <a href="#" class="nav-brand" style="margin-bottom:1rem; display:block;">FITNESS<span>ED</span></a>
+        <p style="color:var(--muted); font-size:0.9rem; line-height:1.6;">Where intelligent analytics meet iron-clad willpower. Built for modern athletes seeking peak structural performance.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#explore">App Tour</a></li>
+          <li><a href="#">Pricing</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#about">About</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Service</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      &copy; 2026 FITNESS ED Platform. All rights reserved.
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <!-- Load Three.js safely from a CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    // Navbar Scroll Effect
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+      } else {
+        navbar.classList.remove('scrolled');
+      }
+    });
+
+    // Three.js Interactive 3D Element
+    const init3D = () => {
+      const container = document.getElementById('canvas-container');
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+      
+      const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      container.appendChild(renderer.domElement);
+
+      // Create an abstract highly modern icosahedron (representing complex biology/data)
+      const geometry = new THREE.IcosahedronGeometry(2, 0);
+      const wireframeMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x4ef2b3, 
+        wireframe: true, 
+        transparent: true,
+        opacity: 0.3
+      });
+      const solidMaterial = new THREE.MeshPhongMaterial({
+        color: 0x102523,
+        shininess: 100,
+        specular: 0x4ef2b3,
+        flatShading: true
+      });
+
+      const mesh = new THREE.Mesh(geometry, solidMaterial);
+      const wireframe = new THREE.Mesh(geometry, wireframeMaterial);
+      wireframe.scale.set(1.05, 1.05, 1.05); // slightly larger
+      
+      const group = new THREE.Group();
+      group.add(mesh);
+      group.add(wireframe);
+      scene.add(group);
+
+      // Lights
+      const light = new THREE.DirectionalLight(0xffffff, 1);
+      light.position.set(5, 5, 5);
+      scene.add(light);
+      
+      const ambientLight = new THREE.AmbientLight(0x404040);
+      scene.add(ambientLight);
+
+      camera.position.z = 6;
+
+      // Mouse Interaction
+      let mouseX = 0;
+      let mouseY = 0;
+      document.addEventListener('mousemove', (e) => {
+        mouseX = (e.clientX - window.innerWidth / 2) * 0.001;
+        mouseY = (e.clientY - window.innerHeight / 2) * 0.001;
+      });
+
+      // Animation Loop
+      const animate = function () {
+        requestAnimationFrame(animate);
+        
+        // Gentle idle rotation
+        group.rotation.x += 0.002;
+        group.rotation.y += 0.003;
+        
+        // Follow mouse slightly
+        group.rotation.x += mouseY * 0.05;
+        group.rotation.y += mouseX * 0.05;
+
+        renderer.render(scene, camera);
+      };
+      
+      // Handle Resize
+      window.addEventListener('resize', () => {
+        if(container.clientWidth > 0) {
+          camera.aspect = container.clientWidth / container.clientHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+      });
+
+      animate();
+    };
+
+    // Initialize after load
+    window.addEventListener('load', init3D);
+  </script>
+</body>
+</html>
