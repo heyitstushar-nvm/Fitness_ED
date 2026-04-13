@@ -1,120 +1,238 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FITNESS ED - Hub</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-  </head>
-  <body class="home-body">
-    <main class="app-shell home-shell">
-      <header class="topbar">
-        <div class="brand">FITNESS ED</div>
-        <button class="menu-button" type="button" id="menuToggle">
-          <span></span>
-        </button>
-        <div class="menu-panel" id="menuPanel">
-          <a href="{{ url_for('home') }}"><button type="button">Home</button></a>
-          <a href="{{ url_for('dashboard') }}"><button type="button">Dashboard</button></a>
-          <a href="{{ url_for('todo') }}"><button type="button">To Do List</button></a>
-          <button type="button" onclick="showToast('Coming Soon', 'History feature is in progress.')">History</button>
-          <button type="button" onclick="showToast('Coming Soon', 'About Us is in progress.')">About Us</button>
-          <a href="{{ url_for('logout') }}"><button type="button" style="color:var(--warning)">Logout</button></a>
-        </div>
-      </header>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FITNESS ED - Control Center</title>
+  <!-- Load Main UI Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Custom Stylesheets -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="dashboard-body">
 
-      <div class="dashboard-hub">
-        <section class="welcome-panel">
-          <div class="user-greeting">
-            <h2>Good Morning, {{ name }}!</h2>
-            <p>Today is a great day to hit your targets.</p>
-          </div>
-          <div class="date-badge" id="currentDate">Mon 16</div>
-        </section>
+<div class="saas-layout">
+  <!-- Left Nav Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand"><a href="{{ url_for('landing') }}" style="color:inherit; text-decoration:none;">FITNESS<span class="hl">ED</span></a></div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('home') }}" class="active"><i>🏠</i> Dashboard</a>
+      <a href="{{ url_for('dashboard') }}"><i>📍</i> Tracker Workspace</a>
+      <a href="{{ url_for('todo') }}"><i>✅</i> Daily Tasks</a>
+      <a href="#" onclick="showToast('Under Development', 'Nutrition logging is launching soon.')"><i>🥗</i> Nutrition Hub</a>
+      <a href="#" onclick="showToast('Under Development', 'Analytics core is compiling.')"><i>📈</i> Analytics Core</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <a href="{{ url_for('logout') }}" class="logout"><i>🚪</i> Secure Logout</a>
+    </div>
+  </aside>
 
-        <section class="modules-grid">
-          <a href="{{ url_for('dashboard') }}" class="module-card accent">
-            <div class="module-icon">📍</div>
-            <h3>Live Tracker</h3>
-            <p>Start a GPS session</p>
-          </a>
-
-          <a href="{{ url_for('todo') }}" class="module-card">
-            <div class="module-icon">✅</div>
-            <h3>Daily Tasks</h3>
-            <p>Check your To-Do list</p>
-          </a>
-
-          <a href="#" class="module-card" onclick="showToast('Feature Coming Soon', 'Workout Plans are under development.')">
-            <div class="module-icon">💪</div>
-            <h3>Workout Plans</h3>
-            <p>Customized splits and routines</p>
-          </a>
-
-          <a href="#" class="module-card" onclick="showToast('Feature Coming Soon', 'Nutrition Guide is under development.')">
-            <div class="module-icon">🥗</div>
-            <h3>Nutrition Guide</h3>
-            <p>Log macros and meal prep</p>
-          </a>
-
-          <a href="#" class="module-card" onclick="showToast('Feature Coming Soon', 'History feature is in progress.')">
-            <div class="module-icon">📊</div>
-            <h3>History & Logs</h3>
-            <p>Review past activities</p>
-          </a>
-
-          <a href="#" class="module-card" onclick="showToast('Feature Coming Soon', 'Community Forums are under development.')">
-            <div class="module-icon">🌍</div>
-            <h3>Community</h3>
-            <p>Connect with other athletes</p>
-          </a>
-
-          <a href="#" class="module-card" onclick="showToast('Feature Coming Soon', 'App Analytics are under development.')">
-            <div class="module-icon">📈</div>
-            <h3>Analytics</h3>
-            <p>Deep dive into your progress</p>
-          </a>
-
-          <a href="#" class="module-card" onclick="showToast('Feature Coming Soon', 'Settings are under development.')">
-            <div class="module-icon">👤</div>
-            <h3>Profile Vault</h3>
-            <p>Manage your account</p>
-          </a>
-        </section>
-        
-        <div class="logout-wrapper">
-           <a href="{{ url_for('logout') }}" class="logout-btn">Log Out</a>
+  <!-- Main Central Interface -->
+  <main class="main-content">
+    
+    <!-- Top Configuration Bar -->
+    <header class="topbar-glass">
+      <div class="search-wrap">
+        <input type="text" placeholder="Search workouts, tasks, or metrics..." />
+      </div>
+      <div class="user-menu" onclick="showToast('Profile Menu', 'Account settings expanding...')">
+        <span class="user-name">{{ name }}</span>
+        <div class="avatar">
+           <span>{{ name[0] }}</span>
         </div>
       </div>
+    </header>
 
-      <footer class="footer-note">FITNESS ED &copy; 2026 • Keep Moving</footer>
-    </main>
-
-    <script src="{{ url_for('static', filename='main.js') }}"></script>
-    <script>
-      const menuToggle = document.getElementById("menuToggle");
-      const menuPanel = document.getElementById("menuPanel");
+    <!-- Deep Dashboard Grid Area -->
+    <div class="dashboard-scroll">
       
-      const d = new Date();
-      document.getElementById("currentDate").innerText = d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
+      <!-- Welcome Hero Array -->
+      <section class="welcome-hero">
+        <div class="hero-info">
+          <h1>Welcome back, {{ name }} 👋</h1>
+          <p>You are in the top 15% of active users this week. Stay consistent.</p>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-pill">
+            <span class="stat-lbl">Calories Burned</span>
+            <span class="stat-val">3,240</span>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-lbl">Sessions</span>
+            <span class="stat-val">12</span>
+          </div>
+          <div class="stat-pill accent">
+            <span class="stat-lbl">🔥 Current Streak</span>
+            <span class="stat-val">5 Days</span>
+          </div>
+        </div>
+      </section>
 
-      menuToggle.addEventListener("click", () => {
-        menuToggle.classList.toggle("open");
-        menuPanel.classList.toggle("open");
-      });
+      <!-- Advanced Widget Grid -->
+      <div class="dash-grid">
+        
+        <!-- Interactive Analytics Chart -->
+        <div class="widget chart-widget">
+           <h3>Activity Velocity (7 Days)</h3>
+           <div style="position: relative; height:250px; width:100%;">
+             <canvas id="progressChart"></canvas>
+           </div>
+        </div>
 
-      document.addEventListener("click", (e) => {
-        if (!menuToggle.contains(e.target) && !menuPanel.contains(e.target)) {
-          menuToggle.classList.remove("open");
-          menuPanel.classList.remove("open");
+        <!-- Bio Snapshot -->
+        <div class="widget profile-widget">
+           <h3>Biometric Snapshot</h3>
+           <div class="snap-content">
+              <div class="snap-avatar">{{ name[0] }}</div>
+              <h4>{{ name }}</h4>
+              <p>Objective: Hypertrophy &amp; Endurance</p>
+              <div style="margin-top: 1rem; font-size: 0.9rem; color: var(--muted);">
+                Phase 2 Initialization Complete<br>
+                <strong>System Readiness: 98%</strong>
+              </div>
+           </div>
+        </div>
+
+        <!-- Quick Action Grid -->
+        <div class="widget actions-widget">
+           <h3>Quick Controls</h3>
+           <div class="actions-grid">
+              <a href="{{ url_for('dashboard') }}" class="action-btn">
+                <div class="icon">🏃</div>
+                <span>Start Session</span>
+              </a>
+              <a href="{{ url_for('todo') }}" class="action-btn">
+                <div class="icon">📝</div>
+                <span>Log Activity</span>
+              </a>
+              <button class="action-btn" onclick="showToast('Syncing Data', 'Downloading biometric logs...')">
+                <div class="icon">📊</div>
+                <span>View Reports</span>
+              </button>
+              <button class="action-btn" onclick="showToast('AI Analyzing', 'Drafting customized routines...')">
+                <div class="icon">🗺️</div>
+                <span>Explore Plans</span>
+              </button>
+           </div>
+        </div>
+
+        <!-- Algorithmic Recommendations -->
+        <div class="widget recom-widget">
+          <h3>Algorithmic Suggestions</h3>
+          <div class="recom-card">
+             <div>
+               <h4>HIIT Cardio Burst</h4>
+               <p>20 Mins • High Intensity • Based on your low cardio volume</p>
+             </div>
+             <button onclick="showToast('Session Ready', 'Initializing HIIT tracking...')">Start</button>
+          </div>
+          <div class="recom-card">
+             <div>
+               <h4>Core & Flexibility</h4>
+               <p>15 Mins • Recovery • Suggested post-workout stretch</p>
+             </div>
+             <button onclick="showToast('Session Ready', 'Initializing Recovery tracking...')">Start</button>
+          </div>
+        </div>
+
+        <!-- Gamification / Streaks -->
+        <div class="widget achieve-widget">
+          <h3>Achievements</h3>
+          <div class="badge-list">
+             <div class="badge-item">
+               <div class="badge-icon">🔥</div>
+               <span>5 Day Unbroken Streak</span>
+             </div>
+             <div class="badge-item">
+               <div class="badge-icon">🏅</div>
+               <span>First Milestone Complete</span>
+             </div>
+             <div class="badge-item locked">
+               <div class="badge-icon">🔒</div>
+               <span>10K Mastery Core (Locked)</span>
+             </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Scripts including Chart.js rendering -->
+<script src="{{ url_for('static', filename='main.js') }}"></script>
+<script>
+  // Initialize Chart.js with extremely premium SaaS aesthetics
+  const ctx = document.getElementById('progressChart').getContext('2d');
+  
+  // Neon gradient fill beneath the line
+  const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+  gradient.addColorStop(0, 'rgba(78, 242, 179, 0.4)');
+  gradient.addColorStop(1, 'rgba(78, 242, 179, 0.0)');
+
+  const progressChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      datasets: [{
+        label: 'Active Minutes',
+        data: [45, 60, 0, 90, 30, 45, 75],
+        borderColor: '#4ef2b3',
+        backgroundColor: gradient,
+        borderWidth: 3,
+        tension: 0.4, // Smooth curved lines
+        pointBackgroundColor: '#071311',
+        pointBorderColor: '#4ef2b3',
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(4, 13, 11, 0.9)',
+          titleColor: '#fff',
+          bodyColor: '#4ef2b3',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          padding: 12,
+          displayColors: false,
+          callbacks: {
+            label: function(context) {
+              return context.parsed.y + ' minutes';
+            }
+          }
         }
-      });
-    </script>
-  </body>
+      },
+      scales: {
+        x: {
+          grid: { display: false, drawBorder: false },
+          ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Space Grotesk' } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
+          ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Space Grotesk' }, stepSize: 30 }
+        }
+      },
+      animation: {
+        duration: 1500,
+        easing: 'easeOutQuart'
+      }
+    }
+  });
+</script>
+
+</body>
 </html>
