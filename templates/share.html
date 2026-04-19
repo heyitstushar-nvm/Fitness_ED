@@ -1,0 +1,64 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FITNESS ED - Share Story</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="app-shell share-shell">
+    <header class="share-header">
+      <div class="brand">FITNESS ED - Share</div>
+      <a href="{{ url_for('history') }}" class="logout-btn" style="color:var(--accent)">Back</a>
+    </header>
+
+    <section class="timeline">
+      <h3>Story Layout</h3>
+      <div class="share-layout-grid">
+        <label>
+          Template
+          <select id="templateSelect" class="todo-input compact-input">
+            <option value="summit">Summit Burst</option>
+            <option value="sunset">Sunset Sprint</option>
+            <option value="night">Night Pulse</option>
+          </select>
+        </label>
+        <label>
+          Info Position (Vertical)
+          <select id="verticalSelect" class="todo-input compact-input">
+            <option value="bottom">Bottom</option>
+            <option value="top">Top</option>
+          </select>
+        </label>
+        <label>
+          Info Position (Horizontal)
+          <select id="horizontalSelect" class="todo-input compact-input">
+            <option value="left">Left</option>
+            <option value="right">Right</option>
+          </select>
+        </label>
+        <label>
+          Background Image
+          <input id="backgroundInput" type="file" accept="image/*" class="todo-input compact-input" />
+        </label>
+      </div>
+
+      <canvas id="shareCanvas" width="1080" height="1920" class="share-preview"></canvas>
+
+      <div class="share-action-grid">
+        <button class="control-button primary" id="saveBtn" type="button">Save to Device</button>
+        <button class="control-button secondary" id="igBtn" type="button">Instagram Stories</button>
+        <button class="control-button secondary" id="snapBtn" type="button">Snapchat</button>
+        <button class="control-button secondary" id="waBtn" type="button">WhatsApp Status</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='main.js') }}"></script>
+  <script src="{{ url_for('static', filename='share.js') }}"></script>
+</body>
+</html>

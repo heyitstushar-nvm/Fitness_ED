@@ -1,238 +1,181 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FITNESS ED - Control Center</title>
-  <!-- Load Main UI Fonts -->
+  <title>FITNESS ED - Main Workspace</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
-  
-  <!-- Custom Stylesheets -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
-  
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="dashboard-body">
-
-<div class="saas-layout">
-  <!-- Left Nav Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-brand"><a href="{{ url_for('landing') }}" style="color:inherit; text-decoration:none;">FITNESS<span class="hl">ED</span></a></div>
-    <nav class="sidebar-nav">
-      <a href="{{ url_for('home') }}" class="active"><i>🏠</i> Dashboard</a>
-      <a href="{{ url_for('dashboard') }}"><i>📍</i> Tracker Workspace</a>
-      <a href="{{ url_for('todo') }}"><i>✅</i> Daily Tasks</a>
-      <a href="#" onclick="showToast('Under Development', 'Nutrition logging is launching soon.')"><i>🥗</i> Nutrition Hub</a>
-      <a href="#" onclick="showToast('Under Development', 'Analytics core is compiling.')"><i>📈</i> Analytics Core</a>
-    </nav>
-    <div class="sidebar-bottom">
-      <a href="{{ url_for('logout') }}" class="logout"><i>🚪</i> Secure Logout</a>
-    </div>
-  </aside>
-
-  <!-- Main Central Interface -->
-  <main class="main-content">
-    
-    <!-- Top Configuration Bar -->
-    <header class="topbar-glass">
-      <div class="search-wrap">
-        <input type="text" placeholder="Search workouts, tasks, or metrics..." />
+<body class="dashboard-body" data-initial-section="{{ request.args.get('section', 'dashboard') }}">
+  <div class="saas-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand"><a href="{{ url_for('landing') }}" style="color:inherit; text-decoration:none;">FITNESS<span class="hl">ED</span></a></div>
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-link active" data-section="dashboard"><i>Home</i> Dashboard</a>
+        <a href="#" class="nav-link" data-section="tracker"><i>Track</i> Tracker Workspace</a>
+        <a href="{{ url_for('todo') }}"><i>Task</i> Daily Tasks</a>
+        <a href="{{ url_for('nutrition') }}"><i>Food</i> Nutrition Hub</a>
+        <a href="{{ url_for('analytics') }}"><i>Data</i> Analytics Core</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <a href="{{ url_for('logout') }}" class="logout"><i>Out</i> Secure Logout</a>
       </div>
-      <div class="user-menu" onclick="showToast('Profile Menu', 'Account settings expanding...')">
-        <span class="user-name">{{ name }}</span>
-        <div class="avatar">
-           <span>{{ name[0] }}</span>
-        </div>
-      </div>
-    </header>
+    </aside>
 
-    <!-- Deep Dashboard Grid Area -->
-    <div class="dashboard-scroll">
-      
-      <!-- Welcome Hero Array -->
-      <section class="welcome-hero">
-        <div class="hero-info">
-          <h1>Welcome back, {{ name }} 👋</h1>
-          <p>You are in the top 15% of active users this week. Stay consistent.</p>
+    <main class="main-content">
+      <header class="topbar-glass">
+        <div class="search-wrap">
+          <input type="text" placeholder="Search workouts, tasks, or metrics..." />
         </div>
-        <div class="hero-stats">
-          <div class="stat-pill">
-            <span class="stat-lbl">Calories Burned</span>
-            <span class="stat-val">3,240</span>
-          </div>
-          <div class="stat-pill">
-            <span class="stat-lbl">Sessions</span>
-            <span class="stat-val">12</span>
-          </div>
-          <div class="stat-pill accent">
-            <span class="stat-lbl">🔥 Current Streak</span>
-            <span class="stat-val">5 Days</span>
-          </div>
+        <div class="user-menu" onclick="showToast('Profile', 'Account settings coming soon.')">
+          <span class="user-name">{{ name }}</span>
+          <div class="avatar"><span>{{ name[0] }}</span></div>
         </div>
-      </section>
+      </header>
 
-      <!-- Advanced Widget Grid -->
-      <div class="dash-grid">
-        
-        <!-- Interactive Analytics Chart -->
-        <div class="widget chart-widget">
-           <h3>Activity Velocity (7 Days)</h3>
-           <div style="position: relative; height:250px; width:100%;">
-             <canvas id="progressChart"></canvas>
-           </div>
-        </div>
-
-        <!-- Bio Snapshot -->
-        <div class="widget profile-widget">
-           <h3>Biometric Snapshot</h3>
-           <div class="snap-content">
-              <div class="snap-avatar">{{ name[0] }}</div>
-              <h4>{{ name }}</h4>
-              <p>Objective: Hypertrophy &amp; Endurance</p>
-              <div style="margin-top: 1rem; font-size: 0.9rem; color: var(--muted);">
-                Phase 2 Initialization Complete<br>
-                <strong>System Readiness: 98%</strong>
+      <div class="dashboard-scroll">
+        <section id="section-dashboard" class="home-section active">
+          <section class="welcome-hero">
+            <div class="hero-info">
+              <h1>Welcome back, {{ name }}</h1>
+              <p>Your dashboard updates in real-time while tracking.</p>
+            </div>
+            <div class="hero-stats">
+              <div class="stat-pill">
+                <span class="stat-lbl">Calories Burned Today</span>
+                <span class="stat-val" id="dashCalories">0</span>
               </div>
-           </div>
-        </div>
+              <div class="stat-pill">
+                <span class="stat-lbl">Sessions This Week</span>
+                <span class="stat-val" id="dashSessions">0</span>
+              </div>
+              <div class="stat-pill accent">
+                <span class="stat-lbl">Current Streak</span>
+                <span class="stat-val" id="dashStreak">0 Days</span>
+              </div>
+            </div>
+          </section>
 
-        <!-- Quick Action Grid -->
-        <div class="widget actions-widget">
-           <h3>Quick Controls</h3>
-           <div class="actions-grid">
-              <a href="{{ url_for('dashboard') }}" class="action-btn">
-                <div class="icon">🏃</div>
-                <span>Start Session</span>
-              </a>
-              <a href="{{ url_for('todo') }}" class="action-btn">
-                <div class="icon">📝</div>
-                <span>Log Activity</span>
-              </a>
-              <button class="action-btn" onclick="showToast('Syncing Data', 'Downloading biometric logs...')">
-                <div class="icon">📊</div>
-                <span>View Reports</span>
-              </button>
-              <button class="action-btn" onclick="showToast('AI Analyzing', 'Drafting customized routines...')">
-                <div class="icon">🗺️</div>
-                <span>Explore Plans</span>
-              </button>
-           </div>
-        </div>
+          <div class="dash-grid">
+            <div class="widget chart-widget">
+              <h3>Activity Velocity (7 Days)</h3>
+              <div style="position: relative; height:250px; width:100%;">
+                <canvas id="progressChart"></canvas>
+              </div>
+            </div>
 
-        <!-- Algorithmic Recommendations -->
-        <div class="widget recom-widget">
-          <h3>Algorithmic Suggestions</h3>
-          <div class="recom-card">
-             <div>
-               <h4>HIIT Cardio Burst</h4>
-               <p>20 Mins • High Intensity • Based on your low cardio volume</p>
-             </div>
-             <button onclick="showToast('Session Ready', 'Initializing HIIT tracking...')">Start</button>
+            <div class="widget profile-widget">
+              <h3>Today Snapshot</h3>
+              <div class="snap-content">
+                <div class="snap-avatar">{{ name[0] }}</div>
+                <h4>{{ name }}</h4>
+                <p>Objective: Consistency & Endurance</p>
+                <div class="snapshot-rows">
+                  <div><span>Distance</span><strong id="dashDistance">0.00 km</strong></div>
+                  <div><span>Steps</span><strong id="dashSteps">0</strong></div>
+                  <div><span>Active Time</span><strong id="dashMinutes">0 min</strong></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="widget actions-widget">
+              <h3>Quick Controls</h3>
+              <div class="actions-grid">
+                <button class="action-btn" type="button" data-open-section="tracker">
+                  <div class="icon">Run</div>
+                  <span>Open Tracker</span>
+                </button>
+                <a href="{{ url_for('todo') }}" class="action-btn">
+                  <div class="icon">Task</div>
+                  <span>Manage Tasks</span>
+                </a>
+                <a href="{{ url_for('nutrition') }}" class="action-btn">
+                  <div class="icon">Meal</div>
+                  <span>Nutrition Hub</span>
+                </a>
+                <a href="{{ url_for('analytics') }}" class="action-btn">
+                  <div class="icon">Graph</div>
+                  <span>Analytics Core</span>
+                </a>
+              </div>
+            </div>
           </div>
-          <div class="recom-card">
-             <div>
-               <h4>Core & Flexibility</h4>
-               <p>15 Mins • Recovery • Suggested post-workout stretch</p>
-             </div>
-             <button onclick="showToast('Session Ready', 'Initializing Recovery tracking...')">Start</button>
-          </div>
-        </div>
+        </section>
 
-        <!-- Gamification / Streaks -->
-        <div class="widget achieve-widget">
-          <h3>Achievements</h3>
-          <div class="badge-list">
-             <div class="badge-item">
-               <div class="badge-icon">🔥</div>
-               <span>5 Day Unbroken Streak</span>
-             </div>
-             <div class="badge-item">
-               <div class="badge-icon">🏅</div>
-               <span>First Milestone Complete</span>
-             </div>
-             <div class="badge-item locked">
-               <div class="badge-icon">🔒</div>
-               <span>10K Mastery Core (Locked)</span>
-             </div>
-          </div>
-        </div>
+        <section id="section-tracker" class="home-section">
+          <div class="tracker-grid">
+            <div>
+              <section class="hero-card">
+                <div class="eyebrow">Live Activity Tracker</div>
+                <h1>Track steps, pace, distance, and route in real-time.</h1>
+                <p>When you stop, this run is saved in history and added to dashboard totals.</p>
+                <div class="controls">
+                  <button class="control-button primary" id="startButton" type="button">Start Tracking</button>
+                  <button class="control-button secondary" id="stopButton" type="button">Stop</button>
+                </div>
+                <div class="status-line">
+                  <span class="status-pill">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="trackingStatus">Waiting to start</span>
+                  </span>
+                  <span id="elapsedTime">00:00</span>
+                </div>
+              </section>
 
+              <section class="stats-grid">
+                <article class="stat-card">
+                  <small>Estimated Steps</small>
+                  <strong id="stepsValue">0</strong>
+                </article>
+                <article class="stat-card">
+                  <small>Distance</small>
+                  <strong id="distanceValue">0.00 km</strong>
+                </article>
+                <article class="stat-card">
+                  <small>Pace / km</small>
+                  <strong id="paceValue">0:00</strong>
+                </article>
+                <article class="stat-card">
+                  <small>Current Location</small>
+                  <strong id="locationValue">Waiting...</strong>
+                </article>
+              </section>
+
+              <section class="timeline">
+                <h3>Sharing</h3>
+                <p style="margin:0;color:var(--muted);line-height:1.55;">
+                  Share is now on a separate mobile editor page. Tap <strong>Share</strong> on any history item to open it.
+                </p>
+              </section>
+            </div>
+
+            <section class="map-panel">
+              <div class="panel-head">
+                <h2>Movement Route Map</h2>
+                <span id="mapLabel">Map ready</span>
+              </div>
+              <div id="map" aria-label="Route map"></div>
+
+              <div class="history-head">
+                <h3>Tracker History (Past 4 Days)</h3>
+                <a href="{{ url_for('history') }}">See All</a>
+              </div>
+              <div id="historyList" class="history-list"></div>
+            </section>
+          </div>
+        </section>
       </div>
-    </div>
-  </main>
-</div>
+    </main>
+  </div>
 
-<!-- Scripts including Chart.js rendering -->
-<script src="{{ url_for('static', filename='main.js') }}"></script>
-<script>
-  // Initialize Chart.js with extremely premium SaaS aesthetics
-  const ctx = document.getElementById('progressChart').getContext('2d');
-  
-  // Neon gradient fill beneath the line
-  const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-  gradient.addColorStop(0, 'rgba(78, 242, 179, 0.4)');
-  gradient.addColorStop(1, 'rgba(78, 242, 179, 0.0)');
-
-  const progressChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      datasets: [{
-        label: 'Active Minutes',
-        data: [45, 60, 0, 90, 30, 45, 75],
-        borderColor: '#4ef2b3',
-        backgroundColor: gradient,
-        borderWidth: 3,
-        tension: 0.4, // Smooth curved lines
-        pointBackgroundColor: '#071311',
-        pointBorderColor: '#4ef2b3',
-        pointBorderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 6,
-        fill: true,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: 'rgba(4, 13, 11, 0.9)',
-          titleColor: '#fff',
-          bodyColor: '#4ef2b3',
-          borderColor: 'rgba(255,255,255,0.1)',
-          borderWidth: 1,
-          padding: 12,
-          displayColors: false,
-          callbacks: {
-            label: function(context) {
-              return context.parsed.y + ' minutes';
-            }
-          }
-        }
-      },
-      scales: {
-        x: {
-          grid: { display: false, drawBorder: false },
-          ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Space Grotesk' } }
-        },
-        y: {
-          grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
-          ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Space Grotesk' }, stepSize: 30 }
-        }
-      },
-      animation: {
-        duration: 1500,
-        easing: 'easeOutQuart'
-      }
-    }
-  });
-</script>
-
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="{{ url_for('static', filename='main.js') }}"></script>
+  <script src="{{ url_for('static', filename='home_new.js') }}"></script>
 </body>
 </html>

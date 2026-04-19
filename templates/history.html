@@ -1,0 +1,30 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FITNESS ED - Run History</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="app-shell" style="max-width:1150px;padding-top:2rem;">
+    <header style="display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem;">
+      <div class="brand">FITNESS ED - Full Tracker History</div>
+      <a href="{{ url_for('home', section='tracker') }}" class="logout-btn" style="color:var(--accent)">Back to Tracker</a>
+    </header>
+
+    <section class="todo-screen">
+      <div class="eyebrow">All Sessions</div>
+      <h2 style="margin-bottom:0.3rem;">Select any run and tap Share</h2>
+      <p style="margin-top:0;">Share opens in a dedicated mobile editor page.</p>
+      <div id="historyList" style="display:grid;gap:0.7rem;margin-top:0.9rem;"></div>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='main.js') }}"></script>
+  <script src="{{ url_for('static', filename='history.js') }}"></script>
+</body>
+</html>

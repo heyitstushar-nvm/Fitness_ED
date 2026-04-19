@@ -1,0 +1,107 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FITNESS ED - Analytics Core</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .analytics-shell { max-width: 1100px; padding-top: 2rem; }
+    .analytics-header { display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:1rem; }
+    .analytics-stats { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .chart-wrap { position:relative; height:290px; }
+    @media (max-width: 720px) {
+      .analytics-shell { padding-top: 1rem; }
+      .analytics-header { align-items:flex-start; flex-direction:column; gap:0.5rem; }
+      .analytics-stats { grid-template-columns: 1fr; }
+      .chart-wrap { height:240px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell analytics-shell">
+    <header class="analytics-header">
+      <div class="brand">FITNESS ED - Analytics Core</div>
+      <a href="{{ url_for('home') }}" class="logout-btn" style="color:var(--accent)">Back to Main</a>
+    </header>
+
+    <section class="stats-grid analytics-stats">
+      <article class="stat-card">
+        <small>Total Distance (30d)</small>
+        <strong id="totalDistance">0.00 km</strong>
+      </article>
+      <article class="stat-card">
+        <small>Total Calories (30d)</small>
+        <strong id="totalCalories">0</strong>
+      </article>
+      <article class="stat-card">
+        <small>Total Steps (30d)</small>
+        <strong id="totalSteps">0</strong>
+      </article>
+    </section>
+
+    <section class="timeline" style="margin-top:1rem;">
+      <h3>Distance Trend</h3>
+      <div class="chart-wrap">
+        <canvas id="distanceChart"></canvas>
+      </div>
+    </section>
+
+    <section class="timeline" style="margin-top:1rem;">
+      <h3>Calories Trend</h3>
+      <div class="chart-wrap">
+        <canvas id="calorieChart"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const totalDistance = document.getElementById('totalDistance');
+    const totalCalories = document.getElementById('totalCalories');
+    const totalSteps = document.getElementById('totalSteps');
+
+    const distanceCtx = document.getElementById('distanceChart').getContext('2d');
+    const calorieCtx = document.getElementById('calorieChart').getContext('2d');
+
+    const distanceChart = new Chart(distanceCtx, {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'Distance (km)', data: [], borderColor: '#4ef2b3', backgroundColor: 'rgba(78,242,179,0.15)', fill: true, tension: 0.3 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+
+    const calorieChart = new Chart(calorieCtx, {
+      type: 'bar',
+      data: { labels: [], datasets: [{ label: 'Calories', data: [], borderColor: '#ffd36e', backgroundColor: 'rgba(255,211,110,0.35)', borderWidth: 1 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+
+    const loadAnalytics = async () => {
+      try {
+        const res = await fetch('/api/activity/analytics');
+        if (!res.ok) return;
+        const data = await res.json();
+
+        totalDistance.textContent = `${Number(data.totals.distance_km || 0).toFixed(2)} km`;
+        totalCalories.textContent = Number(data.totals.calories || 0).toLocaleString();
+        totalSteps.textContent = Number(data.totals.steps || 0).toLocaleString();
+
+        distanceChart.data.labels = data.labels;
+        distanceChart.data.datasets[0].data = data.distance_km;
+        distanceChart.update();
+
+        calorieChart.data.labels = data.labels;
+        calorieChart.data.datasets[0].data = data.calories;
+        calorieChart.update();
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    loadAnalytics();
+  </script>
+</body>
+</html>

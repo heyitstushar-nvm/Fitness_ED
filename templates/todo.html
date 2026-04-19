@@ -1,53 +1,30 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FITNESS ED - To Do List</title>
+    <title>FITNESS ED - Daily Tasks</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="../static/style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
   </head>
   <body>
-    <main class="app-shell">
-      <header class="topbar">
-        <div class="brand">FITNESS ED</div>
-        <button class="menu-button" type="button" id="menuToggle">
-          <span></span>
-        </button>
-        <div class="menu-panel" id="menuPanel">
-          <a href="home.html"><button type="button">Home</button></a>
-          <a href="fitness-ed.html"><button type="button">Dashboard</button></a>
-          <button type="button" onclick="showToast('Coming Soon', 'History feature is in progress.')">History</button>
-          <a href="todo.html"><button type="button">To Do List</button></a>
-          <button type="button" onclick="showToast('Coming Soon', 'About Us is in progress.')">About Us</button>
-          <a href="auth.html"><button type="button">Login</button></a>
-        </div>
+    <main class="app-shell" style="max-width: 760px; padding-top: 2rem;">
+      <header style="display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem;">
+        <div class="brand">FITNESS ED - Daily Tasks</div>
+        <a href="{{ url_for('home') }}" class="logout-btn" style="color:var(--accent)">Back to Main</a>
       </header>
 
       <section class="screen active">
         <div class="todo-screen">
-          <div class="eyebrow">To Do List</div>
+          <div class="eyebrow">Task Workspace</div>
           <h2>Plan your next fitness tasks.</h2>
-          <p>
-            Add reminders, workout notes, or daily goals and keep them in one
-            place inside FITNESS ED.
-          </p>
+          <p>Add reminders, workout notes, and daily goals.</p>
 
           <form class="todo-form" id="todoForm">
-            <input
-              class="todo-input"
-              id="todoInput"
-              type="text"
-              placeholder="Add a new task like Morning walk for 30 mins"
-              maxlength="120"
-              required
-            />
-            <button class="todo-add" type="submit">Add To Do</button>
+            <input class="todo-input" id="todoInput" type="text" placeholder="Add a task like Morning walk for 30 mins" maxlength="120" required />
+            <button class="todo-add" type="submit">Add Task</button>
           </form>
 
           <div class="todo-meta">
@@ -55,117 +32,88 @@
             <span id="todoDoneCount">0 completed</span>
           </div>
 
-          <ul class="todo-list" id="todoList">
-            <!-- Items injected by JS -->
-          </ul>
+          <ul class="todo-list" id="todoList"></ul>
         </div>
       </section>
-
-      <footer class="footer-note">FITNESS ED &copy; 2026 • Keep Moving</footer>
     </main>
 
     <script src="{{ url_for('static', filename='main.js') }}"></script>
     <script>
-      const menuToggle = document.getElementById("menuToggle");
-      const menuPanel = document.getElementById("menuPanel");
-
-      menuToggle.addEventListener("click", () => {
-        menuToggle.classList.toggle("open");
-        menuPanel.classList.toggle("open");
-      });
-
-      document.addEventListener("click", (e) => {
-        if (!menuToggle.contains(e.target) && !menuPanel.contains(e.target)) {
-          menuToggle.classList.remove("open");
-          menuPanel.classList.remove("open");
-        }
-      });
-
-      // Todo API Interactive Logic
-      const todoForm = document.getElementById("todoForm");
-      const todoInput = document.getElementById("todoInput");
-      const todoList = document.getElementById("todoList");
-      const todoCount = document.getElementById("todoCount");
-      const todoDoneCount = document.getElementById("todoDoneCount");
-
-      function loadTodos() {
-        fetch('/api/todos')
-          .then(res => res.json())
-          .then(tasks => {
-            todoList.innerHTML = "";
-            tasks.forEach(task => {
-               addTodoToDOM(task.id, task.text, task.time, task.done, false);
-            });
-          });
-      }
+      const todoForm = document.getElementById('todoForm');
+      const todoInput = document.getElementById('todoInput');
+      const todoList = document.getElementById('todoList');
+      const todoCount = document.getElementById('todoCount');
+      const todoDoneCount = document.getElementById('todoDoneCount');
 
       function updateCounts() {
-        const total = todoList.children.length;
-        const done = todoList.querySelectorAll(".todo-item.done").length;
-        todoCount.innerText = total + " task" + (total !== 1 ? "s" : "");
-        todoDoneCount.innerText = done + " completed";
+        const total = todoList.querySelectorAll('.todo-item').length;
+        const done = todoList.querySelectorAll('.todo-item.done').length;
+        todoCount.innerText = `${total} ${total === 1 ? 'task' : 'tasks'}`;
+        todoDoneCount.innerText = `${done} completed`;
       }
 
-      function handleDelete(btn, id) {
-        btn.parentElement.remove();
+      function handleDelete(button, id) {
+        button.parentElement.remove();
         updateCounts();
-        fetch('/api/todos/' + id, { method: 'DELETE' });
-        showToast("Task Removed", "The task was deleted from your list.");
+        fetch(`/api/todos/${id}`, { method: 'DELETE' });
       }
 
       function handleCheck(checkbox, id) {
-        checkbox.parentElement.classList.toggle("done", checkbox.checked);
+        checkbox.parentElement.classList.toggle('done', checkbox.checked);
         updateCounts();
-        fetch('/api/todos/' + id + '/toggle', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({done: checkbox.checked})
+        fetch(`/api/todos/${id}/toggle`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ done: checkbox.checked })
         });
-        if(checkbox.checked) {
-           showToast("Great Job!", "Task marked as completed.");
-        }
       }
 
-      function addTodoToDOM(id, text, timeText, isDone, prependAndToast) {
-        const li = document.createElement("li");
-        li.className = "todo-item" + (isDone ? " done" : "");
+      function addTodoToDOM(id, text, timeText, isDone, prepend) {
+        const li = document.createElement('li');
+        li.className = `todo-item${isDone ? ' done' : ''}`;
         li.innerHTML = `
           <input type="checkbox" onchange="handleCheck(this, ${id})" ${isDone ? 'checked' : ''} />
           <div class="todo-text">
             <strong>${text}</strong>
             <span>${timeText}</span>
           </div>
-          <button type="button" class="todo-delete" onclick="handleDelete(this, ${id})">✕</button>
+          <button type="button" class="todo-delete" onclick="handleDelete(this, ${id})">Delete</button>
         `;
-        
-        if (prependAndToast) {
-           todoList.prepend(li);
-           showToast("Task Added", "Successfully added to your list.");
+
+        if (prepend) {
+          todoList.prepend(li);
         } else {
-           todoList.appendChild(li);
+          todoList.appendChild(li);
         }
+
         updateCounts();
       }
 
-      todoForm.addEventListener("submit", (e) => {
-        e.preventDefault();
+      function loadTodos() {
+        fetch('/api/todos')
+          .then((res) => res.json())
+          .then((tasks) => {
+            todoList.innerHTML = '';
+            tasks.forEach((task) => addTodoToDOM(task.id, task.text, task.time, task.done, false));
+          });
+      }
+
+      todoForm.addEventListener('submit', (event) => {
+        event.preventDefault();
         const text = todoInput.value.trim();
         if (!text) return;
 
         fetch('/api/todos', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({text: text})
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
         })
-        .then(res => res.json())
-        .then(data => {
-            addTodoToDOM(data.id, data.text, data.time, data.done, true);
-        });
+          .then((res) => res.json())
+          .then((data) => addTodoToDOM(data.id, data.text, data.time, data.done, true));
 
-        todoInput.value = "";
+        todoInput.value = '';
       });
 
-      // Initialize on load
       loadTodos();
     </script>
   </body>
