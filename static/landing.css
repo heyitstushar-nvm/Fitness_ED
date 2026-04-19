@@ -235,3 +235,33 @@
   .section { padding: 5rem 2rem; }
   .navbar { padding: 1.2rem 2rem; }
 }
+
+@media (max-width: 768px) {
+  .hero h1 { font-size: 2.8rem; }
+  .hero p { font-size: 1.1rem; }
+  .section-title { font-size: 2.4rem; }
+  .stat-box h4 { font-size: 2.8rem; }
+  .cta-banner { padding: 4rem 2rem; }
+  .cta-banner h2 { font-size: 2.5rem; }
+  .footer-content { gap: 2rem; }
+  .dev-card { padding: 2rem 1.5rem; }
+  .feature-card { padding: 1.5rem; }
+}
+
+@media (max-width: 480px) {
+  .hero { padding-top: 7rem; padding-left: 1rem; padding-right: 1rem; }
+  .hero h1 { font-size: 2.2rem; }
+  .hero p { font-size: 1rem; margin-bottom: 2rem; }
+  .hero-ctas { flex-direction: column; gap: 1rem; width: 100%; }
+  .hero-ctas .btn-primary, .hero-ctas .btn-outline { width: 100%; text-align: center; }
+  .section { padding: 4rem 1rem; }
+  .navbar { padding: 1rem; }
+  .navbar.scrolled { padding: 0.8rem 1rem; }
+  .section-title { font-size: 2rem; }
+  .stat-box h4 { font-size: 2.2rem; }
+  .cta-banner { padding: 3rem 1.5rem; border-radius: 24px; }
+  .cta-banner h2 { font-size: 2rem; }
+  .cta-banner p { font-size: 1rem; }
+  .footer-content { flex-direction: column; gap: 2rem; }
+  .hero-3d-wrapper { height: 350px; }
+}
