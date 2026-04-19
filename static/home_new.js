@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   const sectionLinks = Array.from(document.querySelectorAll('.nav-link[data-section]'));
   const sections = { dashboard: document.getElementById('section-dashboard'), tracker: document.getElementById('section-tracker') };
   const openSectionButtons = Array.from(document.querySelectorAll('[data-open-section]'));
@@ -55,7 +55,8 @@
   const getLiveSnapshot = () => {
     const durationSeconds = sessionStartedAt ? Math.round((Date.now() - sessionStartedAt) / 1000) : 0;
     const distanceKm = totalDistanceMeters / 1000;
-    const steps = Math.max(0, Math.round(totalDistanceMeters / 0.78));
+    // Use 1.35m per step — accurate for running/jogging cadence
+    const steps = Math.max(0, Math.round(totalDistanceMeters / 1.35));
     const activeMinutes = Math.max(0, Math.round(durationSeconds / 60));
     return {
       distance_km: Number(distanceKm.toFixed(2)),
@@ -90,9 +91,16 @@
   };
 
   const updateStats = (lat, lng) => {
-    stepsValue.textContent = Math.max(0, Math.round(totalDistanceMeters / 0.78)).toLocaleString();
+    stepsValue.textContent = Math.max(0, Math.round(totalDistanceMeters / 1.35)).toLocaleString();
     distanceValue.textContent = `${(totalDistanceMeters / 1000).toFixed(2)} km`;
-    paceValue.textContent = formatPace();
+    // Pace: only show once we have at least 50m to avoid wild early numbers
+    if (sessionStartedAt && totalDistanceMeters >= 50) {
+      const elapsedSec = (Date.now() - sessionStartedAt) / 1000;
+      const paceSecPerKm = elapsedSec / (totalDistanceMeters / 1000);
+      paceValue.textContent = `${Math.floor(paceSecPerKm / 60)}:${String(Math.floor(paceSecPerKm % 60)).padStart(2, '0')}`;
+    } else {
+      paceValue.textContent = '--:--';
+    }
     locationValue.textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
     syncDashboardCards();
   };
@@ -144,7 +152,7 @@
     const endedAt = new Date();
     const durationSeconds = Math.round((endedAt.getTime() - sessionStartedAt) / 1000);
     const distanceKm = totalDistanceMeters / 1000;
-    const steps = Math.max(0, Math.round(totalDistanceMeters / 0.78));
+    const steps = Math.max(0, Math.round(totalDistanceMeters / 1.35));
     if (durationSeconds < 10 && distanceKm < 0.03) return null;
 
     const res = await fetch('/api/activity/session', {

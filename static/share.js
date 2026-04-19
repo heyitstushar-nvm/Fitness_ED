@@ -28,7 +28,7 @@
   const drawRouteOnlyTop = (ctx, width, topHeight, points, color) => {
     ctx.save();
     ctx.strokeStyle = color;
-    ctx.lineWidth = 14;
+    ctx.lineWidth = 10;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
@@ -54,7 +54,7 @@
     const trueLngRange = lngRange * lngScale;
 
     // Increased padding to make the route look better and not overwhelmingly big
-    const padding = 160;
+    const padding = 300;
     const boxWidth = width - padding * 2;
     const boxHeight = topHeight - padding * 2;
 
@@ -106,7 +106,7 @@
       ctx.fillRect(0, 0, width, height);
     }
 
-    const topHeight = Math.round(height * 0.58);
+    const topHeight = Math.round(height * 0.18);
     drawRouteOnlyTop(ctx, width, topHeight, run.route_points || [], conf.route);
 
     const cardWidth = 520;
