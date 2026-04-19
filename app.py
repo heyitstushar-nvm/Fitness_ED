@@ -1,13 +1,29 @@
-﻿import json
+import json
 import os
 from datetime import date, datetime, timedelta
+
+from dotenv import load_dotenv
+load_dotenv()
 
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
+from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
-app.secret_key = 'your_super_secret_key_here'
+app.secret_key = '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'
+
+# OAuth Configuration
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id=os.environ.get('GOOGLE_CLIENT_ID'),
+    client_secret=os.environ.get('GOOGLE_CLIENT_SECRET'),
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
+)
 
 # Database Configuration
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -136,6 +152,34 @@ def session_to_payload(row):
 
 
 # Auth Routes
+@app.route('/login/google')
+def login_google():
+    if not os.environ.get('GOOGLE_CLIENT_ID'):
+        return "Google OAuth credentials not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.", 500
+    redirect_uri = url_for('auth_google_callback', _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+@app.route('/auth/google/callback')
+def auth_google_callback():
+    token = google.authorize_access_token()
+    user_info = token.get('userinfo')
+    
+    if user_info:
+        email = user_info['email']
+        username = user_info.get('name', email.split('@')[0])
+        
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            dummy_password = generate_password_hash(os.urandom(24).hex())
+            user = User(username=username, email=email, password_hash=dummy_password)
+            db.session.add(user)
+            db.session.commit()
+            
+        session['user_id'] = user.id
+        session['user_name'] = user.username
+        
+    return redirect(url_for('home'))
+
 @app.route('/register', methods=['POST'])
 def register():
     username = request.form.get('username')

@@ -177,8 +177,10 @@
 .btn-social {
   flex: 1; padding: 0.8rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border);
   border-radius: 12px; color: #fff; font-weight: 500; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 0.6rem; text-decoration: none;
 }
-.btn-social:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
+.btn-social:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
+.btn-social:active { transform: translateY(0); }
 
 /* Switch Auth Mode */
 .auth-switch { margin-top: 2rem; text-align: center; color: var(--muted); font-size: 0.95rem; }
@@ -190,4 +192,8 @@
   .auth-visual { display: none; } /* Hide 3D split on mobile */
   .auth-form-wrapper { padding: 1rem; }
   .auth-form-container { padding: 2.5rem 1.5rem; }
+}
+
+@media (max-width: 480px) {
+  .social-btns { flex-direction: column; gap: 0.8rem; }
 }

@@ -19,12 +19,21 @@
   <!-- Navigation -->
   <nav class="navbar" id="navbar">
     <a href="#" class="nav-brand">FITNESS<span>ED</span></a>
-    <div class="nav-links">
-      <a href="#features">Features</a>
-      <a href="#explore">Explore</a>
-      <a href="#about">About</a>
+    
+    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle navigation">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <div class="nav-content" id="navContent">
+      <div class="nav-links">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#explore" class="nav-link">Explore</a>
+        <a href="#about" class="nav-link">About</a>
+      </div>
+      <a href="{{ url_for('auth') }}" class="btn-nav-auth">Sign In</a>
     </div>
-    <a href="{{ url_for('auth') }}" class="btn-nav-auth">Sign In</a>
   </nav>
 
   <!-- Hero Section -->
@@ -199,6 +208,22 @@
         navbar.classList.remove('scrolled');
       }
     });
+
+    // Mobile Menu Toggle
+    const mobileToggle = document.getElementById('mobileMenuToggle');
+    const navContent = document.getElementById('navContent');
+    if (mobileToggle) {
+      mobileToggle.addEventListener('click', () => {
+        mobileToggle.classList.toggle('active');
+        navContent.classList.toggle('active');
+      });
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+          mobileToggle.classList.remove('active');
+          navContent.classList.remove('active');
+        });
+      });
+    }
 
     // Three.js Interactive 3D Element
     const init3D = () => {

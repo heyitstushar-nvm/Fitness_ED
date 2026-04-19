@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   const templateSelect = document.getElementById('templateSelect');
   const verticalSelect = document.getElementById('verticalSelect');
   const horizontalSelect = document.getElementById('horizontalSelect');
@@ -28,7 +28,7 @@
   const drawRouteOnlyTop = (ctx, width, topHeight, points, color) => {
     ctx.save();
     ctx.strokeStyle = color;
-    ctx.lineWidth = 16;
+    ctx.lineWidth = 14;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
@@ -48,8 +48,26 @@
     const latRange = maxLat - minLat || 0.0001;
     const lngRange = maxLng - minLng || 0.0001;
 
-    const px = (lng) => 64 + ((lng - minLng) / lngRange) * (width - 128);
-    const py = (lat) => 64 + (topHeight - 128) - ((lat - minLat) / latRange) * (topHeight - 128);
+    // Aspect ratio correction (lng depends on lat)
+    const latMid = (minLat + maxLat) / 2;
+    const lngScale = Math.cos(latMid * Math.PI / 180);
+    const trueLngRange = lngRange * lngScale;
+
+    // Increased padding to make the route look better and not overwhelmingly big
+    const padding = 160;
+    const boxWidth = width - padding * 2;
+    const boxHeight = topHeight - padding * 2;
+
+    const scaleX = boxWidth / trueLngRange;
+    const scaleY = boxHeight / latRange;
+    const scale = Math.min(scaleX, scaleY);
+
+    const cx = width / 2;
+    const cy = topHeight / 2;
+    const lngMid = (minLng + maxLng) / 2;
+
+    const px = (lng) => cx + (lng - lngMid) * lngScale * scale;
+    const py = (lat) => cy - (lat - latMid) * scale;
 
     ctx.beginPath();
     points.forEach((p, i) => {
