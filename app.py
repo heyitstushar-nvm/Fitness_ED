@@ -13,6 +13,17 @@ from authlib.integrations.flask_client import OAuth
 app = Flask(__name__)
 app.secret_key = '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'
 
+# Disable static asset caching so style/script updates appear immediately
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+
+@app.after_request
+def add_no_cache_headers(response):
+    if request.path.startswith('/static/'):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
+
 # OAuth Configuration
 oauth = OAuth(app)
 google = oauth.register(
