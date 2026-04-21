@@ -9,7 +9,12 @@
 
 /* Inject-friendly base */
 .mobile-topbar,
-.mobile-tabbar { display: none; }
+.mobile-tabbar,
+.mt-menu-panel,
+.mt-menu-backdrop { display: none; }
+
+/* Hard guard against horizontal overflow on every viewport */
+html, body { max-width: 100vw; overflow-x: hidden; }
 
 @media (max-width: 1024px) {
   body.app-page {
@@ -75,6 +80,69 @@
     font-size: 1rem;
   }
   .mobile-topbar .mt-icon-btn:active { transform: scale(0.95); }
+
+  /* ====== Slide-down Menu Panel ====== */
+  .mt-menu-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 9500;
+  }
+  .mt-menu-backdrop.open { opacity: 1; pointer-events: auto; }
+
+  .mt-menu-panel {
+    display: block;
+    position: fixed;
+    top: 56px;
+    right: 8px;
+    width: min(260px, calc(100vw - 16px));
+    background: var(--panel-strong);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    padding: 6px;
+    z-index: 9600;
+    transform: translateY(-8px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+  }
+  .mt-menu-panel.open {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  .mt-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    text-decoration: none;
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+  }
+  .mt-menu-item:hover, .mt-menu-item:active { background: var(--surface-hover); }
+  .mt-menu-item span:first-child {
+    width: 28px;
+    text-align: center;
+    color: var(--accent);
+    font-size: 1.05rem;
+  }
+  .mt-menu-danger { color: var(--warning); }
+  .mt-menu-danger span:first-child { color: var(--warning); }
 
   /* ====== Bottom Tab Bar ====== */
   .mobile-tabbar {

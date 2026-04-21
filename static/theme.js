@@ -70,16 +70,53 @@
     top.innerHTML = `
       <div class="mt-left">
         ${backBtn}
-        <div class="mt-title">FITNESS<span>ED</span> · ${meta.title}</div>
+        <div class="mt-title">${meta.title}</div>
       </div>
       <div class="mt-actions">
-        <button class="mt-icon-btn" id="mt-theme-btn" type="button" aria-label="Toggle theme">☾</button>
-        <a class="mt-icon-btn" href="/logout" aria-label="Sign out" title="Sign out">⏻</a>
+        <button class="mt-icon-btn" id="mt-menu-btn" type="button" aria-label="Open menu">☰</button>
       </div>
     `;
     body.prepend(top);
 
-    document.getElementById('mt-theme-btn').addEventListener('click', toggleTheme);
+    // Slide-down menu panel
+    const panel = document.createElement('div');
+    panel.className = 'mt-menu-panel';
+    panel.id = 'mt-menu-panel';
+    panel.innerHTML = `
+      <button class="mt-menu-item" id="mt-theme-btn" type="button">
+        <span id="mt-theme-icon">☾</span><span>Toggle theme</span>
+      </button>
+      <a class="mt-menu-item" href="/home"><span>⌂</span><span>Dashboard</span></a>
+      <a class="mt-menu-item" href="/todo"><span>✓</span><span>Daily Tasks</span></a>
+      <a class="mt-menu-item" href="/nutrition"><span>🍽</span><span>Nutrition</span></a>
+      <a class="mt-menu-item" href="/analytics"><span>📊</span><span>Analytics</span></a>
+      <a class="mt-menu-item" href="/history"><span>⏱</span><span>History</span></a>
+      <a class="mt-menu-item mt-menu-danger" href="/logout"><span>⏻</span><span>Sign out</span></a>
+    `;
+    body.appendChild(panel);
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'mt-menu-backdrop';
+    backdrop.id = 'mt-menu-backdrop';
+    body.appendChild(backdrop);
+
+    function closeMenu() {
+      panel.classList.remove('open');
+      backdrop.classList.remove('open');
+    }
+    function openMenu() {
+      panel.classList.add('open');
+      backdrop.classList.add('open');
+    }
+    document.getElementById('mt-menu-btn').addEventListener('click', () => {
+      panel.classList.contains('open') ? closeMenu() : openMenu();
+    });
+    backdrop.addEventListener('click', closeMenu);
+    document.getElementById('mt-theme-btn').addEventListener('click', () => {
+      toggleTheme();
+      const ico = document.getElementById('mt-theme-icon');
+      if (ico) ico.textContent = root.getAttribute('data-theme') === 'dark' ? '☀' : '☾';
+    });
 
     // Bottom nav
     const nav = document.createElement('nav');
