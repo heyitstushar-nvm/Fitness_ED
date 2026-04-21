@@ -14,8 +14,8 @@
   <style>
     .share-shell { max-width: 720px; }
     .share-stage {
-      display: flex; justify-content: center; padding: 1rem 0;
-      background: var(--surface-soft); border-radius: 24px;
+      display: flex; justify-content: center; padding: 0.5rem 0;
+      background: transparent;
     }
     .share-preview {
       width: 100%;
@@ -24,7 +24,7 @@
       height: auto;
       border-radius: 20px;
       box-shadow: var(--shadow);
-      background: #000;
+      display: block;
     }
     .template-rail {
       display: flex; gap: 0.7rem; overflow-x: auto;
@@ -54,19 +54,57 @@
       padding: 0.35rem 0.25rem; color: var(--text);
       font-weight: 600;
     }
-    .share-tools {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;
-      margin-top: 0.8rem;
+    .bg-toolbar {
+      display: flex; align-items: center; gap: 0.6rem;
+      margin-top: 1rem;
+      padding: 0.6rem;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 16px;
     }
-    .share-tools label { font-size: 0.85rem; color: var(--muted); }
-    .share-tools input[type=file] { width: 100%; }
-    .clear-bg {
-      grid-column: span 2;
-      background: transparent; border: 1px solid var(--border);
-      color: var(--muted); padding: 0.6rem; border-radius: 12px;
-      cursor: pointer; font-weight: 600;
+    .bg-toolbar input[type=file] { display: none; }
+    .bg-btn {
+      flex: 1;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 0.75rem 0.9rem;
+      background: var(--panel-strong);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer; font-weight: 600; font-size: 0.9rem;
+      transition: border-color 0.15s, color 0.15s;
     }
-    .clear-bg:hover { color: var(--text); border-color: var(--accent); }
+    .bg-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .bg-btn.ghost {
+      flex: 0 0 auto; background: transparent; color: var(--muted);
+    }
+    .bg-btn.ghost:hover { color: var(--warning); border-color: var(--warning); }
+    /* Crop modal */
+    .crop-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.78);
+      display: none; align-items: center; justify-content: center; z-index: 9999;
+      padding: 1rem;
+    }
+    .crop-overlay.open { display: flex; }
+    .crop-modal {
+      width: 100%; max-width: 380px;
+      background: var(--panel-strong); border: 1px solid var(--border);
+      border-radius: 20px; padding: 1rem;
+      display: flex; flex-direction: column; gap: 0.8rem;
+    }
+    .crop-stage {
+      width: 100%; aspect-ratio: 9 / 16;
+      background: #000; border-radius: 14px; overflow: hidden;
+      position: relative; touch-action: none;
+    }
+    .crop-stage canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+    .crop-stage canvas:active { cursor: grabbing; }
+    .crop-controls {
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .crop-controls input[type=range] { flex: 1; }
+    .crop-actions { display: flex; gap: 0.6rem; }
+    .crop-actions button { flex: 1; }
   </style>
 </head>
 <body class="app-page" data-page="share">
@@ -84,15 +122,10 @@
         <canvas id="shareCanvas" width="1080" height="1920" class="share-preview"></canvas>
       </div>
 
-      <div class="share-tools">
-        <label>
-          Background Image
-          <input id="backgroundInput" type="file" accept="image/*" class="todo-input compact-input" />
-        </label>
-        <label>
-          Quick Action
-          <button type="button" class="clear-bg" id="clearBgBtn" style="grid-column:auto">Remove background</button>
-        </label>
+      <div class="bg-toolbar">
+        <input id="backgroundInput" type="file" accept="image/*" />
+        <button type="button" class="bg-btn" id="pickBgBtn">+ Add Background</button>
+        <button type="button" class="bg-btn ghost" id="clearBgBtn" title="Remove background">Remove</button>
       </div>
 
       <div class="share-action-grid" style="margin-top:0.8rem; display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;">
@@ -101,6 +134,23 @@
       </div>
     </section>
   </main>
+
+  <div class="crop-overlay" id="cropOverlay" role="dialog" aria-label="Crop image">
+    <div class="crop-modal">
+      <div style="font-weight:700;">Crop to fit</div>
+      <div class="crop-stage" id="cropStage">
+        <canvas id="cropCanvas" width="540" height="960"></canvas>
+      </div>
+      <div class="crop-controls">
+        <span style="font-size:0.8rem;color:var(--muted);">Zoom</span>
+        <input type="range" id="cropZoom" min="1" max="4" step="0.01" value="1" />
+      </div>
+      <div class="crop-actions">
+        <button type="button" class="control-button secondary" id="cropCancel">Cancel</button>
+        <button type="button" class="control-button primary" id="cropApply">Apply</button>
+      </div>
+    </div>
+  </div>
 
   <script src="{{ url_for('static', filename='main.js') }}"></script>
   <script src="{{ url_for('static', filename='share.js') }}"></script>

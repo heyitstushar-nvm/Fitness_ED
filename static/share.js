@@ -4,8 +4,17 @@
   const backgroundInput = document.getElementById('backgroundInput');
   const clearBgBtn = document.getElementById('clearBgBtn');
 
+  const pickBgBtn = document.getElementById('pickBgBtn');
   const saveBtn = document.getElementById('saveBtn');
   const shareBtn = document.getElementById('shareBtn');
+
+  // Crop modal elements
+  const cropOverlay = document.getElementById('cropOverlay');
+  const cropStage = document.getElementById('cropStage');
+  const cropCanvas = document.getElementById('cropCanvas');
+  const cropZoom = document.getElementById('cropZoom');
+  const cropCancel = document.getElementById('cropCancel');
+  const cropApply = document.getElementById('cropApply');
 
   const params = new URLSearchParams(window.location.search);
   const sessionId = Number(params.get('session_id'));
@@ -351,16 +360,113 @@
     drawShare();
   };
 
+  // ---------- Cropping ----------
+  // Target aspect 9:16 — same as the share canvas. Drag to pan, slider to zoom.
+  const CROP_W = cropCanvas.width;
+  const CROP_H = cropCanvas.height;
+  let cropImg = null;
+  let cropState = { scale: 1, baseScale: 1, offX: 0, offY: 0, dragging: false, lastX: 0, lastY: 0 };
+
+  const renderCrop = () => {
+    const cctx = cropCanvas.getContext('2d');
+    cctx.fillStyle = '#000';
+    cctx.fillRect(0, 0, CROP_W, CROP_H);
+    if (!cropImg) return;
+    const s = cropState.baseScale * cropState.scale;
+    const dw = cropImg.width * s;
+    const dh = cropImg.height * s;
+    // Clamp pan so the image always covers the crop frame.
+    const minX = CROP_W - dw, minY = CROP_H - dh;
+    cropState.offX = Math.min(0, Math.max(minX, cropState.offX));
+    cropState.offY = Math.min(0, Math.max(minY, cropState.offY));
+    cctx.drawImage(cropImg, cropState.offX, cropState.offY, dw, dh);
+  };
+
+  const openCrop = (img) => {
+    cropImg = img;
+    // Base scale = "cover" the 9:16 frame.
+    cropState.baseScale = Math.max(CROP_W / img.width, CROP_H / img.height);
+    cropState.scale = 1;
+    cropZoom.value = '1';
+    const dw = img.width * cropState.baseScale;
+    const dh = img.height * cropState.baseScale;
+    cropState.offX = (CROP_W - dw) / 2;
+    cropState.offY = (CROP_H - dh) / 2;
+    cropOverlay.classList.add('open');
+    renderCrop();
+  };
+
+  const closeCrop = () => { cropOverlay.classList.remove('open'); cropImg = null; };
+
+  // Pointer drag for panning
+  const stageToCanvas = (clientX, clientY) => {
+    const rect = cropCanvas.getBoundingClientRect();
+    return {
+      x: (clientX - rect.left) * (CROP_W / rect.width),
+      y: (clientY - rect.top) * (CROP_H / rect.height),
+    };
+  };
+  cropCanvas.addEventListener('pointerdown', (e) => {
+    cropState.dragging = true;
+    const p = stageToCanvas(e.clientX, e.clientY);
+    cropState.lastX = p.x; cropState.lastY = p.y;
+    cropCanvas.setPointerCapture(e.pointerId);
+  });
+  cropCanvas.addEventListener('pointermove', (e) => {
+    if (!cropState.dragging) return;
+    const p = stageToCanvas(e.clientX, e.clientY);
+    cropState.offX += p.x - cropState.lastX;
+    cropState.offY += p.y - cropState.lastY;
+    cropState.lastX = p.x; cropState.lastY = p.y;
+    renderCrop();
+  });
+  cropCanvas.addEventListener('pointerup', (e) => {
+    cropState.dragging = false;
+    try { cropCanvas.releasePointerCapture(e.pointerId); } catch (err) {}
+  });
+  cropZoom.addEventListener('input', () => {
+    const newScale = Number(cropZoom.value);
+    // Zoom around the center of the crop frame.
+    const cxOld = (CROP_W / 2 - cropState.offX) / (cropState.baseScale * cropState.scale);
+    const cyOld = (CROP_H / 2 - cropState.offY) / (cropState.baseScale * cropState.scale);
+    cropState.scale = newScale;
+    cropState.offX = CROP_W / 2 - cxOld * cropState.baseScale * cropState.scale;
+    cropState.offY = CROP_H / 2 - cyOld * cropState.baseScale * cropState.scale;
+    renderCrop();
+  });
+
+  cropCancel.addEventListener('click', closeCrop);
+  cropApply.addEventListener('click', () => {
+    // Render the cropped result at the share canvas resolution (1080x1920).
+    const out = document.createElement('canvas');
+    out.width = 1080; out.height = 1920;
+    const octx = out.getContext('2d');
+    const ratio = 1080 / CROP_W;
+    const s = cropState.baseScale * cropState.scale * ratio;
+    const dw = cropImg.width * s;
+    const dh = cropImg.height * s;
+    octx.drawImage(cropImg, cropState.offX * ratio, cropState.offY * ratio, dw, dh);
+    const finalImg = new Image();
+    finalImg.onload = () => {
+      backgroundImage = finalImg;
+      buildThumbnails();
+      drawShare();
+    };
+    finalImg.src = out.toDataURL('image/png');
+    closeCrop();
+  });
+
   const handleBackground = (event) => {
     const file = event.target.files && event.target.files[0];
-    if (!file) { backgroundImage = null; drawShare(); return; }
+    if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
       const img = new Image();
-      img.onload = () => { backgroundImage = img; drawShare(); };
+      img.onload = () => openCrop(img);
       img.src = reader.result;
     };
     reader.readAsDataURL(file);
+    event.target.value = '';
   };
 
   const clearBackground = () => {
@@ -409,6 +515,7 @@
     }
   };
 
+  pickBgBtn.addEventListener('click', () => backgroundInput.click());
   backgroundInput.addEventListener('change', handleBackground);
   clearBgBtn.addEventListener('click', clearBackground);
   saveBtn.addEventListener('click', saveImage);
