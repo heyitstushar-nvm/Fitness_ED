@@ -12,9 +12,10 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}">
   <script src="{{ url_for('static', filename='theme.js') }}"></script>
 </head>
-<body class="dashboard-body" data-initial-section="{{ request.args.get('section', 'dashboard') }}">
+<body class="dashboard-body app-page" data-page="home">
   <div class="saas-layout">
     <aside class="sidebar">
       <div class="sidebar-brand"><a href="{{ url_for('landing') }}" style="color:inherit; text-decoration:none;">FITNESS<span class="hl">ED</span></a></div>

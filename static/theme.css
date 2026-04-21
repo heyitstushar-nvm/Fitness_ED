@@ -166,6 +166,42 @@ input:focus, .todo-input:focus {
 .logout, .logout-btn, .todo-delete { color: var(--warning) !important; }
 .profile-widget p { color: var(--accent) !important; }
 
+/* Auth page brown/white overrides */
+.auth-page-wrapper { background: var(--bg) !important; }
+.auth-visual {
+  background: linear-gradient(135deg, rgba(139,90,43,0.15), rgba(58,36,22,0.6)),
+              radial-gradient(circle at top left, var(--bg-soft) 0%, var(--accent-strong) 100%) !important;
+}
+.visual-content {
+  background: rgba(0,0,0,0.18) !important;
+  border-color: rgba(255,255,255,0.18) !important;
+  color: #fff !important;
+}
+.visual-content h1 { color: #fff !important; }
+.visual-content p { color: rgba(255,255,255,0.85) !important; }
+.auth-form-wrapper { background: var(--bg) !important; }
+.auth-form-container {
+  background: var(--panel) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+.auth-form-container::before {
+  background: radial-gradient(circle at center, rgba(139,90,43,0.10) 0%, transparent 60%) !important;
+}
+.auth-form-container h2 { color: var(--text) !important; }
+.input-group input { color: var(--text) !important; background: var(--surface-soft) !important; border-color: var(--border) !important; }
+.input-group input:focus { background: var(--surface-hover) !important; border-color: var(--accent) !important; box-shadow: 0 0 0 4px rgba(139,90,43,0.12) !important; }
+.input-group input:not(:placeholder-shown) + label,
+.input-group input:focus + label { background: var(--bg) !important; color: var(--accent) !important; }
+.btn-submit {
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong)) !important;
+  color: var(--on-accent) !important;
+}
+.btn-submit:hover { box-shadow: 0 10px 25px rgba(139,90,43,0.3) !important; }
+.btn-loader { border-color: rgba(255,255,255,0.3) !important; border-top-color: #fff !important; }
+.btn-social { background: var(--surface-soft) !important; border-color: var(--border) !important; color: var(--text) !important; }
+.btn-social:hover { background: var(--surface-hover) !important; }
+
 /* Toast */
 .toast { background: var(--panel-strong) !important; border-color: var(--accent) !important; color: var(--text) !important; }
 .toast-content strong { color: var(--accent) !important; }

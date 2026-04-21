@@ -1,0 +1,311 @@
+/* =========================================================
+   Mobile-first redesign for FITNESS ED authenticated pages.
+   Activates at <= 820px. Provides:
+   - Sticky top header (brand + theme toggle)
+   - Fixed bottom tab navigation
+   - Single-column, card-based layouts
+   - Touch-friendly sizing
+   ========================================================= */
+
+/* Inject-friendly base */
+.mobile-topbar,
+.mobile-tabbar { display: none; }
+
+@media (max-width: 820px) {
+  body.app-page {
+    padding-top: 60px;
+    padding-bottom: 78px;
+    overflow-x: hidden;
+  }
+
+  body.dashboard-body.app-page {
+    overflow: auto !important;
+    height: auto !important;
+  }
+
+  /* ====== Sticky Top Header ====== */
+  .mobile-topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    background: var(--panel-strong);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    z-index: 9000;
+  }
+  .mobile-topbar .mt-left {
+    display: flex; align-items: center; gap: 10px;
+    min-width: 0; flex: 1;
+  }
+  .mobile-topbar .mt-back {
+    width: 36px; height: 36px; border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface-soft);
+    color: var(--text);
+    display: grid; place-items: center;
+    font-size: 1.2rem; text-decoration: none;
+    flex-shrink: 0;
+  }
+  .mobile-topbar .mt-title {
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .mobile-topbar .mt-title span { color: var(--accent); }
+  .mobile-topbar .mt-actions {
+    display: flex; gap: 8px; align-items: center;
+    flex-shrink: 0;
+  }
+  .mobile-topbar .mt-icon-btn {
+    width: 36px; height: 36px; border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface-soft);
+    color: var(--text);
+    display: grid; place-items: center;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+  .mobile-topbar .mt-icon-btn:active { transform: scale(0.95); }
+
+  /* ====== Bottom Tab Bar ====== */
+  .mobile-tabbar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 68px;
+    display: flex;
+    background: var(--panel-strong);
+    border-top: 1px solid var(--border);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    z-index: 9000;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .mobile-tabbar a {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 8px 4px;
+    transition: color 0.15s;
+  }
+  .mobile-tabbar a .tab-ico {
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+  .mobile-tabbar a.active {
+    color: var(--accent);
+  }
+  .mobile-tabbar a.active .tab-ico {
+    transform: translateY(-2px);
+    transition: transform 0.18s ease;
+  }
+  .mobile-tabbar a:active { background: var(--surface-hover); }
+
+  /* Reposition floating theme toggle so it doesn't clash with tabbar */
+  #theme-toggle { display: none !important; }
+
+  /* ====== Hide existing in-page chrome, replaced by mobile shell ====== */
+  body.app-page header > .brand,
+  body.app-page > main > header .logout-btn,
+  body.app-page main > header[style] { /* keep but tighten */ }
+
+  body.app-page .sidebar { display: none !important; }
+  body.app-page .topbar-glass { display: none !important; }
+  body.app-page .saas-layout { flex-direction: column; height: auto; }
+  body.app-page .main-content { overflow: visible; }
+
+  /* Trim per-page custom headers (todo/share/etc use inline header) */
+  body.app-page main.app-shell > header,
+  body.app-page main.nutrition-shell > .nutrition-header,
+  body.app-page main.share-shell > .share-header {
+    display: none !important;
+  }
+
+  /* ====== Layout Containers ====== */
+  body.app-page main.app-shell,
+  body.app-page main.main-content,
+  body.app-page .dashboard-scroll {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 12px 14px 14px !important;
+  }
+
+  body.app-page .dashboard-scroll { padding-top: 8px !important; }
+
+  /* ====== Cards / Sections become full-width stacked ====== */
+  body.app-page .hero-card,
+  body.app-page .timeline,
+  body.app-page .todo-screen,
+  body.app-page .about-screen,
+  body.app-page .login-screen,
+  body.app-page .map-panel,
+  body.app-page .widget,
+  body.app-page .welcome-hero,
+  body.app-page .welcome-panel {
+    border-radius: 18px !important;
+    padding: 14px !important;
+    margin-top: 12px !important;
+  }
+  body.app-page main > section:first-of-type,
+  body.app-page .home-section.active > section:first-child,
+  body.app-page .dashboard-scroll > .home-section:first-child > .welcome-hero {
+    margin-top: 0 !important;
+  }
+
+  body.app-page h1,
+  body.app-page .hero-card h1,
+  body.app-page .hero-info h1 { font-size: 1.5rem !important; line-height: 1.2 !important; }
+  body.app-page h2 { font-size: 1.2rem !important; }
+  body.app-page h3 { font-size: 1rem !important; }
+
+  /* Welcome dashboard hero stacks fully */
+  body.app-page .welcome-hero {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+  }
+  body.app-page .hero-stats {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+  body.app-page .stat-pill {
+    padding: 10px 12px !important;
+    border-radius: 14px !important;
+  }
+  body.app-page .stat-val { font-size: 1.05rem !important; }
+
+  body.app-page .dash-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  body.app-page .chart-widget,
+  body.app-page .profile-widget,
+  body.app-page .actions-widget { grid-column: span 1 !important; }
+
+  body.app-page .actions-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+  body.app-page .action-btn {
+    padding: 14px 10px !important;
+    min-height: 84px;
+    border-radius: 16px !important;
+  }
+
+  /* Tracker controls stack as big buttons */
+  body.app-page .controls {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  body.app-page .control-button {
+    width: 100% !important;
+    min-height: 50px !important;
+    border-radius: 14px !important;
+    font-size: 1rem !important;
+  }
+
+  body.app-page .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  body.app-page .stat-card {
+    padding: 12px !important;
+    border-radius: 16px !important;
+  }
+  body.app-page .stat-card strong { font-size: 1.3rem !important; }
+
+  body.app-page .tracker-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  body.app-page #map { height: 260px !important; border-radius: 14px !important; }
+
+  /* Todo */
+  body.app-page .todo-form {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  body.app-page .todo-input {
+    padding: 14px 14px !important;
+    border-radius: 14px !important;
+    font-size: 1rem !important;
+  }
+  body.app-page .todo-add { padding: 14px !important; min-height: 50px; border-radius: 14px !important; }
+  body.app-page .todo-item {
+    padding: 12px !important;
+    border-radius: 14px !important;
+    gap: 10px !important;
+  }
+  body.app-page .todo-item input[type="checkbox"] {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  /* Nutrition meal grid */
+  body.app-page .meal-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  body.app-page .meal-grid img,
+  body.app-page .meal-grid article img { height: 200px !important; }
+
+  /* History list cards */
+  body.app-page .history-item {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    padding: 12px !important;
+    border-radius: 14px !important;
+  }
+  body.app-page .history-share {
+    width: 100%;
+    min-height: 44px;
+    text-align: center;
+  }
+
+  /* Form / inputs */
+  body.app-page input,
+  body.app-page select,
+  body.app-page textarea {
+    font-size: 16px !important; /* prevent iOS zoom */
+    border-radius: 14px !important;
+    padding: 12px 14px !important;
+  }
+
+  /* Tap-friendly links */
+  body.app-page a, body.app-page button { -webkit-tap-highlight-color: transparent; }
+
+  /* Hide dashboard "logout-btn" inline links since logout is in the More tab */
+  body.app-page .dashboard-scroll .logout-btn,
+  body.app-page main > header .logout-btn { display: none; }
+}
+
+/* Slim phones */
+@media (max-width: 380px) {
+  body.app-page .hero-stats { grid-template-columns: 1fr !important; }
+  body.app-page .actions-grid { grid-template-columns: 1fr !important; }
+  body.app-page .stats-grid { grid-template-columns: 1fr !important; }
+}
