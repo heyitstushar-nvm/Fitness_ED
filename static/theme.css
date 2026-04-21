@@ -96,12 +96,28 @@ body.landing-body,
 body.dashboard-body,
 body.auth-body { color: var(--text); }
 
-/* Welcome panel green tint -> brown tint */
+/* Welcome panel green tint -> theme tint */
 .welcome-panel {
   background: linear-gradient(135deg, var(--surface-hover), var(--surface-soft)), var(--panel) !important;
   border-color: var(--accent) !important;
 }
 .user-greeting h2 { color: var(--text) !important; }
+
+/* Hero card (Live Activity Tracker, Nutrition header) — neutralize green */
+.hero-card {
+  background: linear-gradient(180deg, var(--panel-strong), var(--panel)) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+.hero-card h1, .hero-card h2 { color: var(--text) !important; }
+.module-card.accent { background: var(--surface-soft) !important; }
+.menu-panel button:hover { background: var(--surface-hover) !important; }
+.status-dot.live { background: var(--accent) !important; }
+.control-button.primary {
+  color: var(--on-accent) !important;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong)) !important;
+}
+.date-badge { color: var(--accent) !important; background: var(--surface-hover) !important; }
 
 /* Buttons: keep brown gradient */
 .control-button.primary,
