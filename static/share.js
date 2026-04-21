@@ -114,33 +114,49 @@
     const cardX = horizontalSelect.value === 'left' ? 56 : width - cardWidth - 56;
     const cardY = verticalSelect.value === 'top' ? topHeight + 24 : height - cardHeight - 72;
 
-    ctx.fillStyle = conf.block;
-    ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
+    // No background block — labels and values sit directly on the photo/gradient.
+    // Add a subtle text shadow so text stays legible on any background.
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetY = 2;
 
     ctx.fillStyle = conf.accent;
-    ctx.font = '600 30px Space Grotesk';
+    ctx.font = '600 26px Space Grotesk';
     ctx.fillText('DISTANCE', cardX + 28, cardY + 56);
     ctx.fillStyle = conf.text;
-    ctx.font = '700 62px Space Grotesk';
-    ctx.fillText(`${Number(run.distance_km).toFixed(2)} km`, cardX + 28, cardY + 120);
+    ctx.font = '700 48px Space Grotesk';
+    ctx.fillText(`${Number(run.distance_km).toFixed(2)} km`, cardX + 28, cardY + 110);
 
     ctx.fillStyle = conf.accent;
     ctx.font = '600 26px Space Grotesk';
-    ctx.fillText('PACE / KM', cardX + 28, cardY + 182);
+    ctx.fillText('PACE / KM', cardX + 28, cardY + 172);
     ctx.fillStyle = conf.text;
     ctx.font = '700 48px Space Grotesk';
-    ctx.fillText(run.pace_per_km, cardX + 28, cardY + 236);
+    ctx.fillText(run.pace_per_km, cardX + 28, cardY + 226);
 
     ctx.fillStyle = conf.accent;
     ctx.font = '600 26px Space Grotesk';
-    ctx.fillText('STEPS', cardX + 28, cardY + 292);
+    ctx.fillText('STEPS', cardX + 28, cardY + 288);
     ctx.fillStyle = conf.text;
     ctx.font = '700 48px Space Grotesk';
-    ctx.fillText(Number(run.steps).toLocaleString(), cardX + 28, cardY + 346);
+    ctx.fillText(Number(run.steps).toLocaleString(), cardX + 28, cardY + 342);
 
-    ctx.fillStyle = conf.text;
-    ctx.font = '600 28px Space Grotesk';
-    ctx.fillText('FITNESS-ED', cardX + 28, cardY + 400);
+    // Branded FITNESS-ED logotype with two-tone accent
+    const brandY = cardY + 400;
+    const brandX = cardX + 28;
+    ctx.font = '700 34px Space Grotesk';
+    ctx.fillStyle = conf.accent;
+    ctx.fillText('FITNESS', brandX, brandY);
+    const fitnessW = ctx.measureText('FITNESS').width;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('-', brandX + fitnessW + 4, brandY);
+    const dashW = ctx.measureText('-').width;
+    ctx.fillStyle = conf.route;
+    ctx.fillText('ED', brandX + fitnessW + dashW + 8, brandY);
+
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
   };
 
   const loadRun = async () => {
