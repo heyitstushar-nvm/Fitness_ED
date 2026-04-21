@@ -47,10 +47,23 @@
 }
 
 /* Global body background uses the theme gradient */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
 body {
   background: var(--body-gradient) !important;
   color: var(--text);
 }
+
+/* Defensive: prevent any element from blowing the viewport width */
+img, video, canvas, svg, iframe, table, pre, code {
+  max-width: 100%;
+}
+* { min-width: 0; }
+
+/* Stop layouts that use 100vw from causing horizontal scroll when a scrollbar exists */
+.saas-layout { width: 100% !important; max-width: 100%; }
 
 body.dashboard-body {
   background: var(--body-gradient) !important;
