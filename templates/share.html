@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -11,6 +11,63 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}">
   <script src="{{ url_for('static', filename='theme.js') }}"></script>
+  <style>
+    .share-shell { max-width: 720px; }
+    .share-stage {
+      display: flex; justify-content: center; padding: 1rem 0;
+      background: var(--surface-soft); border-radius: 24px;
+    }
+    .share-preview {
+      width: 100%;
+      max-width: 320px;
+      aspect-ratio: 9 / 16;
+      height: auto;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      background: #000;
+    }
+    .template-rail {
+      display: flex; gap: 0.7rem; overflow-x: auto;
+      padding: 0.4rem 0.2rem 0.8rem;
+      scroll-snap-type: x mandatory;
+    }
+    .template-rail::-webkit-scrollbar { height: 4px; }
+    .template-rail::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .template-card {
+      flex: 0 0 88px;
+      cursor: pointer;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 2px solid transparent;
+      background: var(--panel);
+      transition: transform 0.15s, border-color 0.15s;
+      scroll-snap-align: start;
+      display: flex; flex-direction: column;
+    }
+    .template-card:hover { transform: translateY(-2px); }
+    .template-card.active { border-color: var(--accent); }
+    .template-card canvas {
+      width: 100%; height: 142px; display: block;
+    }
+    .template-card .tname {
+      font-size: 0.7rem; text-align: center;
+      padding: 0.35rem 0.25rem; color: var(--text);
+      font-weight: 600;
+    }
+    .share-tools {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;
+      margin-top: 0.8rem;
+    }
+    .share-tools label { font-size: 0.85rem; color: var(--muted); }
+    .share-tools input[type=file] { width: 100%; }
+    .clear-bg {
+      grid-column: span 2;
+      background: transparent; border: 1px solid var(--border);
+      color: var(--muted); padding: 0.6rem; border-radius: 12px;
+      cursor: pointer; font-weight: 600;
+    }
+    .clear-bg:hover { color: var(--text); border-color: var(--accent); }
+  </style>
 </head>
 <body class="app-page" data-page="share">
   <main class="app-shell share-shell">
@@ -20,39 +77,25 @@
     </header>
 
     <section class="timeline">
-      <h3>Story Layout</h3>
-      <div class="share-layout-grid">
-        <label>
-          Template
-          <select id="templateSelect" class="todo-input compact-input">
-            <option value="summit">Summit Burst</option>
-            <option value="sunset">Sunset Sprint</option>
-            <option value="night">Night Pulse</option>
-          </select>
-        </label>
-        <label>
-          Info Position (Vertical)
-          <select id="verticalSelect" class="todo-input compact-input">
-            <option value="bottom">Bottom</option>
-            <option value="top">Top</option>
-          </select>
-        </label>
-        <label>
-          Info Position (Horizontal)
-          <select id="horizontalSelect" class="todo-input compact-input">
-            <option value="left">Left</option>
-            <option value="right">Right</option>
-          </select>
-        </label>
+      <h3>Choose a Template</h3>
+      <div class="template-rail" id="templateRail"></div>
+
+      <div class="share-stage">
+        <canvas id="shareCanvas" width="1080" height="1920" class="share-preview"></canvas>
+      </div>
+
+      <div class="share-tools">
         <label>
           Background Image
           <input id="backgroundInput" type="file" accept="image/*" class="todo-input compact-input" />
         </label>
+        <label>
+          Quick Action
+          <button type="button" class="clear-bg" id="clearBgBtn" style="grid-column:auto">Remove background</button>
+        </label>
       </div>
 
-      <canvas id="shareCanvas" width="1080" height="1920" class="share-preview"></canvas>
-
-      <div class="share-action-grid">
+      <div class="share-action-grid" style="margin-top:0.8rem;">
         <button class="control-button primary" id="saveBtn" type="button">Save to Device</button>
         <button class="control-button secondary" id="igBtn" type="button">Instagram Stories</button>
         <button class="control-button secondary" id="snapBtn" type="button">Snapchat</button>
