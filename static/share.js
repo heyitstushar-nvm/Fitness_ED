@@ -5,9 +5,7 @@
   const clearBgBtn = document.getElementById('clearBgBtn');
 
   const saveBtn = document.getElementById('saveBtn');
-  const igBtn = document.getElementById('igBtn');
-  const snapBtn = document.getElementById('snapBtn');
-  const waBtn = document.getElementById('waBtn');
+  const shareBtn = document.getElementById('shareBtn');
 
   const params = new URLSearchParams(window.location.search);
   const sessionId = Number(params.get('session_id'));
@@ -134,21 +132,23 @@
       colors: { route: '#ffc37f', accent: '#ffc37f', text: '#fff6ea', grad: [[0, '#3a1d10'], [0.5, '#7a3a1c'], [1, '#1c0e07']] },
       draw(ctx, w, h, run, conf) {
         drawBackground(ctx, w, h, conf.grad);
-        drawRoute(ctx, 60, h * 0.55, w - 120, h * 0.4, run.route_points, conf.route, 11);
+        // Route only takes the middle band so nothing overlaps the brand strip.
+        drawRoute(ctx, 60, h * 0.48, w - 120, h * 0.34, run.route_points, conf.route, 11);
         setShadow(ctx, true);
         ctx.textAlign = 'right';
         const rx = w - 80;
         let y = 200;
         ctx.fillStyle = conf.accent; ctx.font = '600 26px Space Grotesk';
         ctx.fillText('DISTANCE', rx, y);
-        ctx.fillStyle = conf.text; ctx.font = '700 110px Space Grotesk';
-        ctx.fillText(`${Number(run.distance_km).toFixed(2)}`, rx, y + 110);
+        ctx.fillStyle = conf.text; ctx.font = '700 130px Space Grotesk';
+        ctx.fillText(`${Number(run.distance_km).toFixed(2)}`, rx, y + 130);
         ctx.font = '600 32px Space Grotesk'; ctx.fillStyle = conf.accent;
-        ctx.fillText('km', rx, y + 150);
-        y += 230;
-        ctx.fillStyle = conf.text; ctx.font = '700 44px Space Grotesk';
-        ctx.fillText(`${run.pace_per_km}  •  ${Number(run.steps).toLocaleString()} steps`, rx, y);
+        ctx.fillText('KILOMETERS', rx, y + 175);
+        // Stats row sits ABOVE the route so the brand can own the bottom strip.
         ctx.textAlign = 'left';
+        const sy = h - 200;
+        ctx.fillStyle = conf.text; ctx.font = '700 44px Space Grotesk';
+        ctx.fillText(`${run.pace_per_km}  /  ${Number(run.steps).toLocaleString()} steps`, 80, sy);
         drawBrand(ctx, 80, h - 90, conf, 34);
         setShadow(ctx, false);
       },
@@ -228,9 +228,11 @@
         ctx.fillStyle = conf.accent; ctx.font = '600 26px Space Grotesk';
         ctx.fillText('TODAY\u2019S RUN', px, py);
         ctx.fillStyle = conf.text; ctx.font = '700 130px Space Grotesk';
-        ctx.fillText(`${Number(run.distance_km).toFixed(2)}`, px, py + 130);
+        const distStr = `${Number(run.distance_km).toFixed(2)}`;
+        ctx.fillText(distStr, px, py + 130);
+        const distW = ctx.measureText(distStr).width;
         ctx.font = '600 34px Space Grotesk'; ctx.fillStyle = conf.accent;
-        ctx.fillText('km', px + ctx.measureText(`${Number(run.distance_km).toFixed(2)}`).width + 16, py + 130);
+        ctx.fillText('km', px + distW + 16, py + 130);
         py += 230;
         // two-column stats
         const col2 = px + cardW / 2 - 30;
@@ -256,21 +258,24 @@
         ctx.fillStyle = conf.accent; ctx.font = '600 28px Space Grotesk';
         ctx.fillText('FRESH SPLIT', x, y); y += 90;
         ctx.fillStyle = conf.text; ctx.font = '700 160px Space Grotesk';
-        ctx.fillText(`${Number(run.distance_km).toFixed(2)}`, x, y);
+        const dStr = `${Number(run.distance_km).toFixed(2)}`;
+        ctx.fillText(dStr, x, y);
+        const dW = ctx.measureText(dStr).width;
         ctx.font = '600 36px Space Grotesk'; ctx.fillStyle = conf.accent;
-        ctx.fillText('KM', x + ctx.measureText(`${Number(run.distance_km).toFixed(2)}`).width + 18, y);
+        ctx.fillText('KM', x + dW + 18, y);
         y += 80;
         ctx.fillStyle = conf.text; ctx.font = '700 50px Space Grotesk';
         ctx.fillText(`${run.pace_per_km} pace`, x, y);
         y += 65;
         ctx.fillText(`${Number(run.steps).toLocaleString()} steps`, x, y);
         setShadow(ctx, false);
-        // bottom half: route panel
+        // bottom half: route panel — leave a clear strip at the very bottom for the brand
         const ry = h * 0.55;
+        const brandStrip = 130;
         ctx.fillStyle = 'rgba(255,255,255,0.04)';
-        ctx.fillRect(0, ry, w, h - ry);
-        drawRoute(ctx, 40, ry + 40, w - 80, h - ry - 200, run.route_points, conf.route, 14);
-        drawBrand(ctx, x, h - 90, conf, 34);
+        ctx.fillRect(0, ry, w, h - ry - brandStrip);
+        drawRoute(ctx, 40, ry + 30, w - 80, h - ry - brandStrip - 60, run.route_points, conf.route, 14);
+        drawBrand(ctx, x, h - 60, conf, 34);
       },
     },
   ];
@@ -364,37 +369,50 @@
     drawShare();
   };
 
+  const fileName = () => `fitness-ed-story-${sessionId || Date.now()}.png`;
+
   const saveImage = () => {
     const a = document.createElement('a');
     a.href = canvas.toDataURL('image/png');
-    a.download = `fitness-ed-story-${sessionId || Date.now()}.png`;
+    a.download = fileName();
     a.click();
   };
 
-  const shareText = () => {
-    if (!run) return 'My FITNESS-ED activity.';
-    return `I covered ${Number(run.distance_km).toFixed(2)} km at ${run.pace_per_km} pace with FITNESS-ED.`;
+  const shareCaption = () => {
+    if (!run) return 'My FITNESS-ED activity. #fitnessed';
+    return `I covered ${Number(run.distance_km).toFixed(2)} km at ${run.pace_per_km} pace with FITNESS-ED. #fitnessed #runstory`;
   };
 
-  const shareWA = () => window.open(`https://wa.me/?text=${encodeURIComponent(shareText())}`, '_blank');
+  const canvasToBlob = () => new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
 
-  const nativeShare = async (platform) => {
-    const text = `${shareText()} #fitnessed #runstory`;
-    if (navigator.share) {
-      try { await navigator.share({ title: 'My FITNESS-ED Story', text }); return; }
-      catch (err) { console.error(err); }
+  const shareImage = async () => {
+    const blob = await canvasToBlob();
+    if (!blob) { saveImage(); return; }
+    const file = new File([blob], fileName(), { type: 'image/png' });
+    const data = { title: 'My FITNESS-ED Story', text: shareCaption(), files: [file] };
+
+    // Always save the photo first so the user has a copy on their device.
+    saveImage();
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share(data); return; }
+      catch (err) { if (err && err.name === 'AbortError') return; }
     }
-    navigator.clipboard.writeText(text).then(() => {
-      if (typeof showToast === 'function') showToast(platform, `Caption copied. Open ${platform} and upload saved image.`);
-    });
+    // Fallback: copy caption + tell the user the photo was saved.
+    if (navigator.clipboard) {
+      try { await navigator.clipboard.writeText(shareCaption()); } catch (e) {}
+    }
+    if (typeof showToast === 'function') {
+      showToast('Saved', 'Photo saved to your device. Caption copied — paste it in any app.');
+    } else {
+      alert('Photo saved to your device. Open any app and attach the saved image.');
+    }
   };
 
   backgroundInput.addEventListener('change', handleBackground);
   clearBgBtn.addEventListener('click', clearBackground);
   saveBtn.addEventListener('click', saveImage);
-  igBtn.addEventListener('click', () => nativeShare('Instagram Stories'));
-  snapBtn.addEventListener('click', () => nativeShare('Snapchat'));
-  waBtn.addEventListener('click', shareWA);
+  shareBtn.addEventListener('click', shareImage);
 
   loadRun();
 })();
