@@ -82,6 +82,23 @@
     dashDistance.textContent = `${Number(today.distance_km || 0).toFixed(2)} km`;
     dashSteps.textContent = Math.round(today.steps || 0).toLocaleString();
     dashMinutes.textContent = `${Math.round(today.active_minutes || 0)} min`;
+
+    // Progress Now widget
+    const stepsTarget = 8000;
+    const distanceTarget = 5;
+    const caloriesTarget = 500;
+    const stepsVal = Math.round(today.steps || 0);
+    const distanceVal = Number(today.distance_km || 0);
+    const caloriesVal = Math.round(today.calories || 0);
+    const setProg = (id, val, pct) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+      const bar = document.getElementById(id + 'Bar');
+      if (bar) bar.style.width = Math.min(100, Math.max(0, pct)) + '%';
+    };
+    setProg('progSteps', stepsVal.toLocaleString(), (stepsVal / stepsTarget) * 100);
+    setProg('progDistance', distanceVal.toFixed(2), (distanceVal / distanceTarget) * 100);
+    setProg('progCalories', caloriesVal.toLocaleString(), (caloriesVal / caloriesTarget) * 100);
   };
 
   const setTrackingState = (active, text) => {

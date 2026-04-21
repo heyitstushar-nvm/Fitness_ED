@@ -84,25 +84,36 @@
               </div>
             </div>
 
-            <div class="widget actions-widget">
-              <h3>Quick Controls</h3>
-              <div class="actions-grid">
-                <button class="action-btn" type="button" data-open-section="tracker">
+            <div class="widget actions-widget progress-widget">
+              <h3>Progress Now</h3>
+              <div class="progress-body">
+                <div class="progress-stats">
+                  <div class="progress-row">
+                    <div class="progress-label">
+                      <span>Daily Steps</span>
+                      <strong><span id="progSteps">0</span> / 8,000</strong>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" id="progStepsBar" style="width:0%"></div></div>
+                  </div>
+                  <div class="progress-row">
+                    <div class="progress-label">
+                      <span>Distance</span>
+                      <strong><span id="progDistance">0.00</span> / 5.00 km</strong>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" id="progDistanceBar" style="width:0%"></div></div>
+                  </div>
+                  <div class="progress-row">
+                    <div class="progress-label">
+                      <span>Calories</span>
+                      <strong><span id="progCalories">0</span> / 500 kcal</strong>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" id="progCaloriesBar" style="width:0%"></div></div>
+                  </div>
+                </div>
+                <button class="action-btn progress-tracker-btn" type="button" data-open-section="tracker">
                   <div class="icon">Run</div>
                   <span>Open Tracker</span>
                 </button>
-                <a href="{{ url_for('todo') }}" class="action-btn">
-                  <div class="icon">Task</div>
-                  <span>Manage Tasks</span>
-                </a>
-                <a href="{{ url_for('nutrition') }}" class="action-btn">
-                  <div class="icon">Meal</div>
-                  <span>Nutrition Hub</span>
-                </a>
-                <a href="{{ url_for('analytics') }}" class="action-btn">
-                  <div class="icon">Graph</div>
-                  <span>Analytics Core</span>
-                </a>
               </div>
             </div>
           </div>

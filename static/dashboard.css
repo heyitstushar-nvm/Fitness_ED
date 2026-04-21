@@ -295,6 +295,45 @@ body.dashboard-body {
   grid-column: span 3;
 }
 
+.progress-widget .progress-body {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1.2rem;
+  align-items: center;
+}
+.progress-stats { display: grid; gap: 0.85rem; }
+.progress-row { display: grid; gap: 6px; }
+.progress-label {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 0.85rem; color: var(--muted);
+}
+.progress-label strong { font-size: 0.9rem; color: var(--text); font-weight: 600; }
+.progress-bar {
+  height: 8px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+.progress-tracker-btn {
+  flex-direction: row !important;
+  gap: 10px !important;
+  padding: 1rem 1.4rem !important;
+  min-width: 180px;
+  justify-self: end;
+}
+
+@media (max-width: 1024px) {
+  .progress-widget .progress-body {
+    grid-template-columns: 1fr;
+  }
+  .progress-tracker-btn { width: 100%; justify-self: stretch; }
+}
+
 .actions-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
