@@ -26,25 +26,46 @@
 }
 
 :root[data-theme="dark"] {
-  --bg: #1c120a;
-  --bg-soft: #2a1a10;
-  --panel: rgba(46, 28, 17, 0.85);
-  --panel-strong: rgba(58, 36, 22, 0.95);
-  --border: rgba(232, 200, 160, 0.18);
-  --text: #f5e6d3;
-  --muted: #c4a585;
-  --accent: #d49a5e;        /* warm brown */
-  --accent-strong: #e8b87a;
-  --warning: #f0b97a;
-  --shadow: 0 22px 50px rgba(0, 0, 0, 0.5);
-  --on-accent: #2a1810;
-  --surface-soft: rgba(232, 200, 160, 0.06);
-  --surface-hover: rgba(232, 200, 160, 0.12);
+  --bg: #0a0a0c;
+  --bg-soft: #14141a;
+  --panel: rgba(22, 22, 28, 0.88);
+  --panel-strong: rgba(28, 28, 36, 0.96);
+  --border: rgba(255, 255, 255, 0.10);
+  --text: #f4f6fb;
+  --muted: #9aa3b2;
+  --accent: #ffb347;        /* bright amber */
+  --accent-strong: #ffd07a;
+  --warning: #ff7a59;
+  --shadow: 0 22px 50px rgba(0, 0, 0, 0.6);
+  --on-accent: #0a0a0c;
+  --surface-soft: rgba(255, 255, 255, 0.04);
+  --surface-hover: rgba(255, 255, 255, 0.09);
   --body-gradient:
-    radial-gradient(circle at top, rgba(212, 154, 94, 0.18), transparent 30%),
-    radial-gradient(circle at bottom right, rgba(232, 184, 122, 0.10), transparent 28%),
-    linear-gradient(180deg, #15100a 0%, var(--bg) 50%, #20140c 100%);
+    radial-gradient(circle at top, rgba(255, 179, 71, 0.10), transparent 35%),
+    radial-gradient(circle at bottom right, rgba(120, 140, 255, 0.08), transparent 35%),
+    linear-gradient(180deg, #050508 0%, var(--bg) 50%, #0d0d12 100%);
 }
+
+/* Dark theme: neutralize hardcoded brown tints with neutral white shadows/glows */
+:root[data-theme="dark"] .status-dot.live { box-shadow: 0 0 0 6px rgba(255, 179, 71, 0.20) !important; }
+:root[data-theme="dark"] .auth-visual {
+  background: linear-gradient(135deg, rgba(255,179,71,0.10), rgba(20,20,26,0.85)),
+              radial-gradient(circle at top left, var(--bg-soft) 0%, #050508 100%) !important;
+}
+:root[data-theme="dark"] .auth-visual::before,
+:root[data-theme="dark"] .auth-visual::after {
+  background: radial-gradient(circle at center, rgba(255,179,71,0.10) 0%, transparent 60%) !important;
+}
+:root[data-theme="dark"] .input-group input:focus {
+  box-shadow: 0 0 0 4px rgba(255,179,71,0.15) !important;
+}
+:root[data-theme="dark"] .btn-submit:hover {
+  box-shadow: 0 10px 25px rgba(255,179,71,0.30) !important;
+}
+:root[data-theme="dark"] .progress-widget::before {
+  background: radial-gradient(circle at top right, rgba(255, 179, 71, 0.08), transparent 60%);
+}
+:root[data-theme="dark"] .progress-bar { background: rgba(255, 255, 255, 0.06); }
 
 /* Global body background uses the theme gradient */
 html, body {
