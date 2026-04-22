@@ -78,7 +78,8 @@
     }
     dashCalories.textContent = Math.round(today.calories || 0).toLocaleString();
     dashSessions.textContent = Number(baseSummary.sessions_week || 0).toLocaleString();
-    dashStreak.textContent = `${baseSummary.streak_days || 0} Days`;
+    const streakCount = Number(baseSummary.streak_days || 0);
+    dashStreak.textContent = `${streakCount} ${streakCount === 1 ? 'Day' : 'Days'}`;
     dashDistance.textContent = `${Number(today.distance_km || 0).toFixed(2)} km`;
     dashSteps.textContent = Math.round(today.steps || 0).toLocaleString();
     dashMinutes.textContent = `${Math.round(today.active_minutes || 0)} min`;
@@ -233,13 +234,56 @@
     updateLiveNotification();
   };
 
+  // Filter constants for sane GPS readings.
+  const GPS_MIN_ACCURACY_M = 25;     // ignore readings worse than this
+  const GPS_MIN_STEP_M = 3;          // ignore tiny jitters when standing still
+  const GPS_MAX_SPEED_MPS = 8;       // 28.8 km/h — faster than recreational runners
+  const GPS_WARMUP_FIXES = 2;        // require this many "good" fixes before counting distance
+  let lastFixTime = null;
+  let goodFixCount = 0;
+
   const handlePosition = (position) => {
     const { latitude, longitude, accuracy } = position.coords;
-    const nextPoint = [latitude, longitude];
-    if (routePoints.length > 0) totalDistanceMeters += map.distance(routePoints[routePoints.length - 1], nextPoint);
-    else startMarker = L.marker(nextPoint).addTo(map).bindPopup('Start point');
+    const now = Date.now();
 
-    routePoints.push(nextPoint);
+    // 1) Reject low-accuracy readings entirely.
+    if (accuracy && accuracy > GPS_MIN_ACCURACY_M) {
+      mapLabel.textContent = `Searching for GPS lock... (+/-${Math.round(accuracy)} m)`;
+      return;
+    }
+    goodFixCount += 1;
+
+    const nextPoint = [latitude, longitude];
+
+    if (routePoints.length === 0) {
+      // First accepted fix: place start marker, do not credit distance yet.
+      startMarker = L.marker(nextPoint).addTo(map).bindPopup('Start point');
+      routePoints.push(nextPoint);
+      lastFixTime = now;
+    } else {
+      const prev = routePoints[routePoints.length - 1];
+      const segMeters = map.distance(prev, nextPoint);
+      const segSeconds = lastFixTime ? Math.max(0.001, (now - lastFixTime) / 1000) : 1;
+      const segSpeed = segMeters / segSeconds;
+
+      // 2) Drop standing-still jitter (< 3 m).
+      // 3) Drop GPS jumps (impossible speed) — keeps map fluid but doesn't credit distance.
+      // 4) Skip distance for the very first couple of fixes (warm-up).
+      if (segMeters < GPS_MIN_STEP_M || segSpeed > GPS_MAX_SPEED_MPS || goodFixCount <= GPS_WARMUP_FIXES) {
+        // Update marker position only; do NOT push or accumulate.
+        if (liveMarker) liveMarker.setLatLng(nextPoint);
+        else liveMarker = L.circleMarker(nextPoint, { radius: 8, color: '#ffd36e', fillColor: '#ffd36e', fillOpacity: 0.9 }).addTo(map);
+        mapLabel.textContent = `Stabilising GPS... (+/-${Math.round(accuracy)} m)`;
+        lastFixTime = now;
+        updateStats(latitude, longitude);
+        return;
+      }
+
+      totalDistanceMeters += segMeters;
+      routePoints.push(nextPoint);
+      lastFixTime = now;
+    }
+
     routeLine.setLatLngs(routePoints);
 
     if (!liveMarker) {
@@ -335,6 +379,8 @@
     resetTracking();
     totalDistanceMeters = 0;
     routePoints = [];
+    goodFixCount = 0;
+    lastFixTime = null;
     routeLine.setLatLngs([]);
     stepsValue.textContent = '0';
     distanceValue.textContent = '0.00 km';
@@ -424,6 +470,20 @@
     syncDashboardCards();
   };
 
+  // Format using the user's device timezone with Indian locale style.
+  const fmtDate = (iso, fallback) => {
+    if (!iso) return fallback || '';
+    try {
+      return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch (e) { return fallback || ''; }
+  };
+  const fmtTime = (iso, fallback) => {
+    if (!iso) return fallback || '';
+    try {
+      return new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
+    } catch (e) { return fallback || ''; }
+  };
+
   const renderHistory = () => {
     if (!recentHistory.length) {
       historyList.innerHTML = '<div class="history-empty">No runs in the last 4 days yet. Start tracking to build history.</div>';
@@ -435,7 +495,7 @@
         (session) => `
           <article class="history-item">
             <div>
-              <strong>${session.date_label} • ${session.time_label}</strong>
+              <strong>${fmtDate(session.started_at_iso, session.date_label)} • ${fmtTime(session.started_at_iso, session.time_label)}</strong>
               <div class="history-metrics">
                 <span>${Number(session.distance_km).toFixed(2)} km</span>
                 <span>${session.pace_per_km} pace</span>
@@ -469,8 +529,128 @@
   startButton.addEventListener('click', startTracking);
   stopButton.addEventListener('click', stopTracking);
 
+  // ---------- Streak modal + warning notifications ----------
+  const streakPill = document.getElementById('streakPill');
+  const streakOverlay = document.getElementById('streakOverlay');
+  const streakClose = document.getElementById('streakClose');
+  const streakBigCount = document.getElementById('streakBigCount');
+  const streakUnitLabel = document.getElementById('streakUnitLabel');
+  const streakLastActive = document.getElementById('streakLastActive');
+  const streakTimeRemaining = document.getElementById('streakTimeRemaining');
+
+  let streakInfo = { count: 0, last_visit_at: null, window_hours: 35 };
+
+  const formatHoursRemaining = (hoursLeft) => {
+    if (hoursLeft <= 0) return 'Streak has ended';
+    const h = Math.floor(hoursLeft);
+    const m = Math.round((hoursLeft - h) * 60);
+    if (h <= 0) return `${m} min left`;
+    if (m <= 0) return `${h} h left`;
+    return `${h} h ${m} min left`;
+  };
+
+  const renderStreakModal = () => {
+    const count = Number(streakInfo.count || 0);
+    streakBigCount.textContent = count;
+    streakUnitLabel.textContent = count === 1 ? 'day in a row' : 'days in a row';
+    if (streakInfo.last_visit_at) {
+      const lastDate = new Date(streakInfo.last_visit_at);
+      streakLastActive.textContent = `${fmtDate(streakInfo.last_visit_at)} at ${fmtTime(streakInfo.last_visit_at)}`;
+      const elapsedHours = (Date.now() - lastDate.getTime()) / 3600000;
+      const hoursLeft = (streakInfo.window_hours || 35) - elapsedHours;
+      streakTimeRemaining.textContent = formatHoursRemaining(hoursLeft);
+    } else {
+      streakLastActive.textContent = 'Just now';
+      streakTimeRemaining.textContent = `${streakInfo.window_hours || 35} h left`;
+    }
+  };
+
+  const openStreakModal = () => { renderStreakModal(); streakOverlay.classList.add('open'); };
+  const closeStreakModal = () => streakOverlay.classList.remove('open');
+
+  if (streakPill) {
+    streakPill.addEventListener('click', openStreakModal);
+    streakPill.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openStreakModal(); }
+    });
+  }
+  if (streakClose) streakClose.addEventListener('click', closeStreakModal);
+  if (streakOverlay) {
+    streakOverlay.addEventListener('click', (e) => { if (e.target === streakOverlay) closeStreakModal(); });
+  }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeStreakModal(); });
+
+  // Streak-ending warnings: notify at 8h, 16h, 24h, 32h after last visit
+  // (i.e. when ~27h, 19h, 11h, 3h remain). Fires while the page is open.
+  const STREAK_NOTIF_KEY = 'fitnessed.streakNotifLastVisit';
+  const NOTIF_HOURS_AFTER = [8, 16, 24, 32];
+  let streakNotifTimers = [];
+
+  const fireStreakWarning = (hoursLeft) => {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const headline = hoursLeft <= 4 ? 'Your streak is about to end!' : 'Keep your streak alive';
+    const body = hoursLeft <= 0
+      ? 'Your streak just ended. Open the app to start a new one.'
+      : `Open FITNESS ED in the next ${Math.max(1, Math.round(hoursLeft))} hours to keep your ${streakInfo.count}-day streak.`;
+    try {
+      new Notification(headline, { body, tag: 'fitnessed-streak', renotify: true, silent: false });
+    } catch (e) {}
+  };
+
+  const scheduleStreakWarnings = () => {
+    streakNotifTimers.forEach((id) => window.clearTimeout(id));
+    streakNotifTimers = [];
+    if (!streakInfo.last_visit_at) return;
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'default') {
+      // Best-effort permission ask once on dashboard load.
+      Notification.requestPermission().catch(() => {});
+    }
+    if (Notification.permission !== 'granted') return;
+
+    const lastVisitMs = new Date(streakInfo.last_visit_at).getTime();
+    const windowMs = (streakInfo.window_hours || 35) * 3600000;
+    let firedKey = '';
+    try { firedKey = localStorage.getItem(STREAK_NOTIF_KEY) || ''; } catch (e) {}
+    const sameVisit = firedKey.startsWith(String(lastVisitMs));
+    const firedHours = sameVisit ? new Set(firedKey.split('|').slice(1).map(Number)) : new Set();
+
+    NOTIF_HOURS_AFTER.forEach((h) => {
+      if (firedHours.has(h)) return;
+      const fireAt = lastVisitMs + h * 3600000;
+      const delay = fireAt - Date.now();
+      if (delay <= 0) {
+        // Already past this point — only fire if the streak window hasn't closed yet.
+        if (Date.now() - lastVisitMs < windowMs) {
+          fireStreakWarning((windowMs - (Date.now() - lastVisitMs)) / 3600000);
+          firedHours.add(h);
+        }
+        return;
+      }
+      const id = window.setTimeout(() => {
+        const elapsed = Date.now() - lastVisitMs;
+        if (elapsed >= windowMs) return;
+        fireStreakWarning((windowMs - elapsed) / 3600000);
+        firedHours.add(h);
+        try { localStorage.setItem(STREAK_NOTIF_KEY, [lastVisitMs, ...Array.from(firedHours)].join('|')); } catch (e) {}
+      }, delay);
+      streakNotifTimers.push(id);
+    });
+    try { localStorage.setItem(STREAK_NOTIF_KEY, [lastVisitMs, ...Array.from(firedHours)].join('|')); } catch (e) {}
+  };
+
+  const loadStreak = async () => {
+    try {
+      const res = await fetch('/api/streak');
+      if (!res.ok) return;
+      streakInfo = await res.json();
+      scheduleStreakWarnings();
+    } catch (e) {}
+  };
+
   initChart();
   loadDashboardSummary();
   loadRecentHistory();
+  loadStreak();
   openSection(initialSection);
 })();

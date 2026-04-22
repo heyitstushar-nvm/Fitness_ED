@@ -55,7 +55,7 @@
                 <span class="stat-lbl">Sessions This Week</span>
                 <span class="stat-val" id="dashSessions">0</span>
               </div>
-              <div class="stat-pill accent">
+              <div class="stat-pill accent streak-pill" id="streakPill" role="button" tabindex="0" title="See streak details">
                 <span class="stat-lbl">Current Streak</span>
                 <span class="stat-val" id="dashStreak">0 Days</span>
               </div>
@@ -203,6 +203,30 @@
         </section>
       </div>
     </main>
+  </div>
+
+  <div class="streak-overlay" id="streakOverlay" role="dialog" aria-modal="true" aria-labelledby="streakModalTitle">
+    <div class="streak-card" role="document">
+      <button type="button" class="streak-close" id="streakClose" aria-label="Close">&times;</button>
+      <div class="streak-eyebrow" id="streakModalTitle">Your Streak</div>
+      <div class="streak-number" id="streakBigCount">0</div>
+      <div class="streak-unit" id="streakUnitLabel">days in a row</div>
+      <div class="streak-meta">
+        <div class="streak-meta-row">
+          <span>Last active</span>
+          <strong id="streakLastActive">—</strong>
+        </div>
+        <div class="streak-meta-row">
+          <span>Time before streak ends</span>
+          <strong id="streakTimeRemaining">—</strong>
+        </div>
+      </div>
+      <p class="streak-explainer">
+        Your streak counts the days you have been using the app in a row.
+        If you do not open the app for <strong>35 hours</strong>, your streak will end and reset to zero.
+        Come back every day to keep it growing.
+      </p>
+    </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>

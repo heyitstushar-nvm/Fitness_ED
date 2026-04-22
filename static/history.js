@@ -2,6 +2,17 @@
   const historyList = document.getElementById('historyList');
   let sessions = [];
 
+  const fmtDate = (iso, fb) => {
+    if (!iso) return fb || '';
+    try { return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }); }
+    catch (e) { return fb || ''; }
+  };
+  const fmtTime = (iso, fb) => {
+    if (!iso) return fb || '';
+    try { return new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true }); }
+    catch (e) { return fb || ''; }
+  };
+
   const renderList = () => {
     if (!sessions.length) {
       historyList.innerHTML = '<div class="history-empty">No sessions recorded yet.</div>';
@@ -13,7 +24,7 @@
         (run) => `
         <article class="history-item" style="display:flex;justify-content:space-between;align-items:center;gap:0.8rem;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);padding:0.8rem;border-radius:12px;">
           <div>
-            <strong>${run.date_label} • ${run.time_label}</strong>
+            <strong>${fmtDate(run.started_at_iso, run.date_label)} • ${fmtTime(run.started_at_iso, run.time_label)}</strong>
             <div class="history-metrics" style="display:flex;gap:0.7rem;color:var(--muted);font-size:0.86rem;margin-top:0.25rem;flex-wrap:wrap;">
               <span>${Number(run.distance_km).toFixed(2)} km</span>
               <span>${run.pace_per_km} pace</span>

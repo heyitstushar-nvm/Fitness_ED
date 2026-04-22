@@ -1,6 +1,8 @@
 import json
 import os
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
+
+STREAK_WINDOW_HOURS = 35
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -73,6 +75,12 @@ class ActivityDaily(db.Model):
     __table_args__ = (db.UniqueConstraint('user_id', 'day', name='uniq_user_day'),)
 
 
+class UserStreak(db.Model):
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    streak_count = db.Column(db.Integer, nullable=False, default=0)
+    last_visit_at = db.Column(db.DateTime, nullable=True)  # stored as UTC
+
+
 class ActivitySession(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
@@ -122,9 +130,55 @@ def parse_iso_datetime(iso_text, fallback=None):
         return fallback
     try:
         normalized = str(iso_text).replace('Z', '+00:00')
-        return datetime.fromisoformat(normalized)
+        dt = datetime.fromisoformat(normalized)
     except ValueError:
         return fallback
+    # Always store as UTC naive so the DB has a consistent zone.
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+    return dt
+
+
+def to_iso_utc(dt):
+    if not dt:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    else:
+        dt = dt.astimezone(timezone.utc)
+    return dt.isoformat().replace('+00:00', 'Z')
+
+
+def record_user_visit(user_id):
+    """Bump the user's streak when they open the app.
+
+    Streak rules:
+      - First ever visit -> streak = 1.
+      - Gap since last visit > STREAK_WINDOW_HOURS -> streak resets to 1.
+      - Gap within window AND a new calendar day -> streak += 1.
+      - Same day visit -> unchanged.
+    """
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    record = UserStreak.query.filter_by(user_id=user_id).first()
+    if not record:
+        record = UserStreak(user_id=user_id, streak_count=1, last_visit_at=now)
+        db.session.add(record)
+        db.session.commit()
+        return record
+
+    last = record.last_visit_at
+    if not last:
+        record.streak_count = 1
+    else:
+        elapsed_hours = (now - last).total_seconds() / 3600.0
+        if elapsed_hours > STREAK_WINDOW_HOURS:
+            record.streak_count = 1
+        elif last.date() != now.date():
+            record.streak_count = (record.streak_count or 0) + 1
+        # same calendar day -> unchanged
+    record.last_visit_at = now
+    db.session.commit()
+    return record
 
 
 def pace_text_from_seconds(pace_seconds):
@@ -151,6 +205,8 @@ def session_to_payload(row):
     return {
         'id': row.id,
         'date_iso': row.started_at.date().isoformat(),
+        'started_at_iso': to_iso_utc(row.started_at),
+        'ended_at_iso': to_iso_utc(row.ended_at),
         'date_label': row.started_at.strftime('%d %b %Y'),
         'time_label': row.started_at.strftime('%I:%M %p'),
         'distance_km': round(row.distance_km, 2),
@@ -241,6 +297,7 @@ def landing():
 def home():
     if 'user_id' not in session:
         return redirect(url_for('auth'))
+    record_user_visit(session['user_id'])
     return render_template('home.html', name=session.get('user_name'))
 
 
@@ -451,7 +508,11 @@ def activity_summary():
     chart_active_minutes = [weekly_by_day[d].active_minutes if d in weekly_by_day else 0 for d in weekly_days]
 
     sessions_week = sum((weekly_by_day[d].sessions if d in weekly_by_day else 0) for d in weekly_days)
-    streak = calculate_streak(user_id, today)
+
+    # Streak based on app usage (UserStreak), not just workout sessions.
+    streak_row = UserStreak.query.filter_by(user_id=user_id).first()
+    streak = streak_row.streak_count if streak_row else 0
+    last_visit_iso = to_iso_utc(streak_row.last_visit_at) if streak_row and streak_row.last_visit_at else None
 
     return jsonify(
         {
@@ -464,10 +525,31 @@ def activity_summary():
             },
             'sessions_week': sessions_week,
             'streak_days': streak,
+            'streak': {
+                'count': streak,
+                'last_visit_at': last_visit_iso,
+                'window_hours': STREAK_WINDOW_HOURS,
+            },
             'chart': {
                 'labels': chart_labels,
                 'active_minutes': chart_active_minutes,
             },
+        }
+    )
+
+
+@app.route('/api/streak', methods=['GET'])
+def streak_status():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    row = UserStreak.query.filter_by(user_id=session['user_id']).first()
+    if not row:
+        return jsonify({'count': 0, 'last_visit_at': None, 'window_hours': STREAK_WINDOW_HOURS})
+    return jsonify(
+        {
+            'count': row.streak_count or 0,
+            'last_visit_at': to_iso_utc(row.last_visit_at) if row.last_visit_at else None,
+            'window_hours': STREAK_WINDOW_HOURS,
         }
     )
 

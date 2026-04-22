@@ -405,6 +405,109 @@ body.dashboard-body {
 }
 .goal-hint { font-size: 0.7rem; color: var(--muted); opacity: 0.75; }
 
+/* Streak pill clickable + modal */
+.streak-pill { cursor: pointer; transition: transform 0.15s ease, box-shadow 0.2s ease; }
+.streak-pill:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255, 179, 71, 0.18); }
+.streak-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.streak-overlay {
+  position: fixed; inset: 0;
+  display: none;
+  align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  z-index: 1000;
+  padding: 1rem;
+  animation: streakFadeIn 0.18s ease;
+}
+.streak-overlay.open { display: flex; }
+@keyframes streakFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.streak-card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface, #14141a);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 2.2rem 1.8rem 1.8rem;
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+  animation: streakRise 0.22s ease;
+}
+@keyframes streakRise { from { transform: translateY(14px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.streak-close {
+  position: absolute; top: 12px; right: 14px;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.streak-close:hover { color: var(--text); background: rgba(255, 255, 255, 0.12); }
+
+.streak-eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+.streak-number {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(4.5rem, 18vw, 6.5rem);
+  font-weight: 700;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong, var(--accent)));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin: 0.4rem 0 0.2rem;
+}
+.streak-unit { font-size: 0.95rem; color: var(--muted); margin-bottom: 1.4rem; }
+
+.streak-meta {
+  display: flex; flex-direction: column; gap: 0.55rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.2rem;
+}
+.streak-meta-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 0.85rem; color: var(--muted);
+}
+.streak-meta-row strong { color: var(--text); font-weight: 600; }
+
+.streak-explainer {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0;
+  text-align: left;
+}
+.streak-explainer strong { color: var(--accent); font-weight: 700; }
+
+.streak-warning-banner {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: rgba(255, 179, 71, 0.12);
+  border: 1px solid rgba(255, 179, 71, 0.4);
+  color: var(--text);
+  font-size: 0.85rem;
+  display: none;
+}
+.streak-warning-banner.show { display: block; }
+.streak-warning-banner strong { color: var(--accent); }
+
 @media (max-width: 1024px) {
   .progress-widget .progress-body {
     grid-template-columns: 1fr;
