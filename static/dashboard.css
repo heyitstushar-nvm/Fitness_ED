@@ -335,12 +335,75 @@ body.dashboard-body {
   transition: width 0.5s ease;
 }
 .progress-tracker-btn {
-  flex-direction: row !important;
-  gap: 10px !important;
+  flex-direction: column !important;
+  gap: 6px !important;
   padding: 1rem 1.4rem !important;
-  min-width: 180px;
-  justify-self: end;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--muted) !important;
 }
+.progress-tracker-btn .icon {
+  font-size: 1rem !important;
+  color: var(--text) !important;
+  letter-spacing: 0.5px;
+}
+.progress-tracker-btn span {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+.progress-tracker-btn:hover {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border-color: var(--accent) !important;
+  color: var(--text) !important;
+  transform: translateY(-2px);
+}
+.progress-tracker-btn:hover span { color: var(--text); }
+
+/* Edit-mode controls inside Progress Now */
+.progress-widget-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px;
+}
+.progress-edit-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+.progress-edit-btn:hover { color: var(--accent); border-color: var(--accent); }
+.progress-edit-btn.active { background: var(--accent); color: var(--on-accent, #0a0a0c); border-color: var(--accent); }
+
+.progress-edit-panel {
+  display: none;
+  margin-top: 0.85rem;
+  padding: 0.9rem 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  gap: 0.85rem;
+  flex-direction: column;
+}
+.progress-edit-panel.open { display: flex; }
+.goal-row { display: grid; gap: 6px; }
+.goal-row-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 0.78rem; color: var(--muted);
+}
+.goal-row-head strong { color: var(--text); font-size: 0.9rem; font-weight: 600; }
+.goal-row input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.goal-hint { font-size: 0.7rem; color: var(--muted); opacity: 0.75; }
 
 @media (max-width: 1024px) {
   .progress-widget .progress-body {

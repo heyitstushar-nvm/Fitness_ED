@@ -83,23 +83,112 @@
     dashSteps.textContent = Math.round(today.steps || 0).toLocaleString();
     dashMinutes.textContent = `${Math.round(today.active_minutes || 0)} min`;
 
-    // Progress Now widget
-    const stepsTarget = 8000;
-    const distanceTarget = 5;
-    const caloriesTarget = 500;
+    // Progress Now widget — uses customizable goals
     const stepsVal = Math.round(today.steps || 0);
     const distanceVal = Number(today.distance_km || 0);
-    const caloriesVal = Math.round(today.calories || 0);
+    const activeMin = Number(today.active_minutes || 0);
+
+    // Live pace if tracking; otherwise today's avg pace from accumulated minutes/distance
+    let paceSecPerKm = 0;
+    if (sessionStartedAt && totalDistanceMeters >= 50) {
+      paceSecPerKm = (Date.now() - sessionStartedAt) / 1000 / (totalDistanceMeters / 1000);
+    } else if (distanceVal > 0 && activeMin > 0) {
+      paceSecPerKm = (activeMin * 60) / distanceVal;
+    }
+
     const setProg = (id, val, pct) => {
       const el = document.getElementById(id);
       if (el) el.textContent = val;
       const bar = document.getElementById(id + 'Bar');
       if (bar) bar.style.width = Math.min(100, Math.max(0, pct)) + '%';
     };
-    setProg('progSteps', stepsVal.toLocaleString(), (stepsVal / stepsTarget) * 100);
-    setProg('progDistance', distanceVal.toFixed(2), (distanceVal / distanceTarget) * 100);
-    setProg('progCalories', caloriesVal.toLocaleString(), (caloriesVal / caloriesTarget) * 100);
+    setProg('progSteps', stepsVal.toLocaleString(), (stepsVal / goals.steps) * 100);
+    setProg('progDistance', distanceVal.toFixed(2), (distanceVal / goals.distance) * 100);
+    if (paceSecPerKm > 0) {
+      setProg('progPace', formatPaceSeconds(paceSecPerKm), (goals.pace / paceSecPerKm) * 100);
+    } else {
+      const el = document.getElementById('progPace');
+      if (el) el.textContent = '--:--';
+      const bar = document.getElementById('progPaceBar');
+      if (bar) bar.style.width = '0%';
+    }
   };
+
+  // ---------- Customizable goals ----------
+  const STEP_LENGTH_M = 1.35; // shared with tracking
+  const GOALS_KEY = 'fitnessed.goals';
+  const defaultGoals = { steps: 8000, distance: 5.0, pace: 360 }; // pace seconds/km
+  let goals = { ...defaultGoals };
+  try {
+    const saved = JSON.parse(localStorage.getItem(GOALS_KEY) || 'null');
+    if (saved && typeof saved === 'object') goals = { ...defaultGoals, ...saved };
+  } catch (e) {}
+
+  const formatPaceSeconds = (sec) => {
+    if (!sec || sec <= 0) return '--:--';
+    return `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
+  };
+
+  const editBtn = document.getElementById('progressEditBtn');
+  const editPanel = document.getElementById('progressEditPanel');
+  const stepsSlider = document.getElementById('goalStepsSlider');
+  const distanceSlider = document.getElementById('goalDistanceSlider');
+  const paceSlider = document.getElementById('goalPaceSlider');
+  const stepsLabel = document.getElementById('goalStepsLabel');
+  const distanceLabel = document.getElementById('goalDistanceLabel');
+  const paceLabel = document.getElementById('goalPaceLabel');
+  const stepsGoalText = document.getElementById('progStepsGoal');
+  const distanceGoalText = document.getElementById('progDistanceGoal');
+  const paceGoalText = document.getElementById('progPaceGoal');
+
+  const renderGoalLabels = () => {
+    stepsSlider.value = String(goals.steps);
+    distanceSlider.value = String(goals.distance);
+    paceSlider.value = String(goals.pace);
+    stepsLabel.textContent = goals.steps.toLocaleString();
+    distanceLabel.textContent = goals.distance.toFixed(2);
+    paceLabel.textContent = formatPaceSeconds(goals.pace);
+    stepsGoalText.textContent = goals.steps.toLocaleString();
+    distanceGoalText.textContent = goals.distance.toFixed(2);
+    paceGoalText.textContent = formatPaceSeconds(goals.pace);
+  };
+
+  const persistGoals = () => {
+    try { localStorage.setItem(GOALS_KEY, JSON.stringify(goals)); } catch (e) {}
+  };
+
+  if (editBtn && editPanel) {
+    editBtn.addEventListener('click', () => {
+      const open = editPanel.classList.toggle('open');
+      editBtn.classList.toggle('active', open);
+      editBtn.setAttribute('aria-pressed', open ? 'true' : 'false');
+      editBtn.textContent = open ? 'Done' : 'Edit Goals';
+    });
+
+    stepsSlider.addEventListener('input', () => {
+      goals.steps = Number(stepsSlider.value);
+      // Auto-sync distance from steps using 1.35 m/step
+      goals.distance = Number(((goals.steps * STEP_LENGTH_M) / 1000).toFixed(2));
+      goals.distance = Math.min(30, Math.max(0.5, goals.distance));
+      renderGoalLabels();
+      persistGoals();
+      syncDashboardCards();
+    });
+    distanceSlider.addEventListener('input', () => {
+      goals.distance = Number(Number(distanceSlider.value).toFixed(2));
+      renderGoalLabels();
+      persistGoals();
+      syncDashboardCards();
+    });
+    paceSlider.addEventListener('input', () => {
+      goals.pace = Number(paceSlider.value);
+      renderGoalLabels();
+      persistGoals();
+      syncDashboardCards();
+    });
+
+    renderGoalLabels();
+  }
 
   const setTrackingState = (active, text) => {
     trackingStatus.textContent = text;
@@ -141,6 +230,7 @@
     elapsedTime.textContent = formatElapsed((Date.now() - sessionStartedAt) / 1000);
     paceValue.textContent = formatPace();
     syncDashboardCards();
+    updateLiveNotification();
   };
 
   const handlePosition = (position) => {
@@ -190,8 +280,58 @@
     return payload.session || null;
   };
 
+  // ---------- Live tracking notifications ----------
+  let notifEnabled = false;
+  let lastNotifAt = 0;
+  let activeNotif = null;
+
+  const ensureNotifPermission = async () => {
+    if (!('Notification' in window)) return false;
+    if (Notification.permission === 'granted') return true;
+    if (Notification.permission === 'denied') return false;
+    try {
+      const result = await Notification.requestPermission();
+      return result === 'granted';
+    } catch (e) { return false; }
+  };
+
+  const updateLiveNotification = (force = false) => {
+    if (!notifEnabled || !sessionStartedAt) return;
+    const now = Date.now();
+    if (!force && now - lastNotifAt < 5000) return; // throttle 5s
+    lastNotifAt = now;
+
+    const distanceKm = totalDistanceMeters / 1000;
+    const steps = Math.max(0, Math.round(totalDistanceMeters / 1.35));
+    let paceText = '--:--';
+    if (totalDistanceMeters >= 50) {
+      const elapsedSec = (now - sessionStartedAt) / 1000;
+      const paceSec = elapsedSec / (totalDistanceMeters / 1000);
+      paceText = formatPaceSeconds(paceSec);
+    }
+    const body = `Steps: ${steps.toLocaleString()}  •  Distance: ${distanceKm.toFixed(2)} km  •  Pace: ${paceText}/km`;
+    try {
+      if (activeNotif) { try { activeNotif.close(); } catch (e) {} }
+      activeNotif = new Notification('FITNESS ED — Live Run', {
+        body,
+        tag: 'fitnessed-live',
+        renotify: false,
+        silent: true,
+      });
+    } catch (e) {}
+  };
+
+  const closeLiveNotification = () => {
+    if (activeNotif) { try { activeNotif.close(); } catch (e) {} activeNotif = null; }
+  };
+
   const startTracking = () => {
     if (!navigator.geolocation) return setTrackingState(false, 'Geolocation not supported');
+    // Fire-and-forget permission request; notifications enable as soon as granted.
+    ensureNotifPermission().then((ok) => {
+      notifEnabled = ok;
+      if (ok) updateLiveNotification(true);
+    });
     resetTracking();
     totalDistanceMeters = 0;
     routePoints = [];
@@ -227,6 +367,7 @@
 
   const stopTracking = async () => {
     resetTracking();
+    closeLiveNotification();
     setTrackingState(false, routePoints.length ? 'Tracking stopped' : 'Waiting to start');
     const savedSession = await logSessionToBackend();
     sessionStartedAt = null;
