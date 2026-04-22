@@ -35,6 +35,9 @@
         <a href="#explore" class="nav-link">Explore</a>
         <a href="#about" class="nav-link">About</a>
       </div>
+      <button class="nav-theme-toggle" id="navThemeToggle" type="button" aria-label="Toggle dark/light mode" title="Toggle dark/light mode">
+        <span></span><span></span><span></span>
+      </button>
       <a href="{{ url_for('auth') }}" class="btn-nav-auth">Sign In</a>
     </div>
   </nav>
@@ -229,6 +232,33 @@
     }
 
     // Three.js Interactive 3D Element
+    const hexToInt = (h) => {
+      h = (h || '').trim().replace('#', '');
+      if (h.length === 3) h = h.split('').map(c => c + c).join('');
+      const n = parseInt(h, 16);
+      return isNaN(n) ? 0x8b5a2b : n;
+    };
+    const themeColors = () => {
+      const css = getComputedStyle(document.documentElement);
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      return {
+        wire: hexToInt(css.getPropertyValue('--accent')),
+        solid: hexToInt(css.getPropertyValue('--bg-soft')),
+        spec: hexToInt(css.getPropertyValue('--accent-strong')),
+        ambient: isDark ? 0x222226 : 0x6b4a30,
+      };
+    };
+
+    let _themedMaterials = null;
+    const applyThemeToScene = () => {
+      if (!_themedMaterials) return;
+      const c = themeColors();
+      _themedMaterials.wire.color.setHex(c.wire);
+      _themedMaterials.solid.color.setHex(c.solid);
+      _themedMaterials.solid.specular.setHex(c.spec);
+      _themedMaterials.ambient.color.setHex(c.ambient);
+    };
+
     const init3D = () => {
       const container = document.getElementById('canvas-container');
       const scene = new THREE.Scene();
@@ -238,18 +268,18 @@
       renderer.setSize(container.clientWidth, container.clientHeight);
       container.appendChild(renderer.domElement);
 
-      // Create an abstract highly modern icosahedron (representing complex biology/data)
+      const c = themeColors();
       const geometry = new THREE.IcosahedronGeometry(2, 0);
       const wireframeMaterial = new THREE.MeshBasicMaterial({ 
-        color: 0x4ef2b3, 
+        color: c.wire, 
         wireframe: true, 
         transparent: true,
-        opacity: 0.3
+        opacity: 0.45
       });
       const solidMaterial = new THREE.MeshPhongMaterial({
-        color: 0x102523,
+        color: c.solid,
         shininess: 100,
-        specular: 0x4ef2b3,
+        specular: c.spec,
         flatShading: true
       });
 
@@ -267,8 +297,10 @@
       light.position.set(5, 5, 5);
       scene.add(light);
       
-      const ambientLight = new THREE.AmbientLight(0x404040);
+      const ambientLight = new THREE.AmbientLight(c.ambient);
       scene.add(ambientLight);
+
+      _themedMaterials = { wire: wireframeMaterial, solid: solidMaterial, ambient: ambientLight };
 
       camera.position.z = 6;
 
@@ -309,6 +341,21 @@
 
     // Initialize after load
     window.addEventListener('load', init3D);
+
+    // Navbar theme toggle (3-line menu icon)
+    const navThemeToggle = document.getElementById('navThemeToggle');
+    if (navThemeToggle) {
+      navThemeToggle.addEventListener('click', () => {
+        const root = document.documentElement;
+        const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem('fitnessed-theme', next); } catch (e) {}
+        applyThemeToScene();
+      });
+    }
+    // React to any external theme change too
+    new MutationObserver(applyThemeToScene)
+      .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   </script>
 </body>
 </html>
