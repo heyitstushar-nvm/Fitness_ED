@@ -19,25 +19,34 @@
   <div class="saas-layout">
     <aside class="sidebar">
       <div class="sidebar-brand"><a href="{{ url_for('landing') }}" style="color:inherit; text-decoration:none;">FITNESS<span class="hl">ED</span></a></div>
+      <p class="sidebar-tagline">Daily fitness command center</p>
       <nav class="sidebar-nav">
-        <a href="#" class="nav-link active" data-section="dashboard"><i>Home</i> Dashboard</a>
-        <a href="#" class="nav-link" data-section="tracker"><i>Track</i> Tracker Workspace</a>
+        <a href="#" class="nav-link active" data-section="dashboard"><i>Home</i> Home Dashboard</a>
+        <a href="#" class="nav-link" data-section="tracker"><i>Track</i> Live Tracker</a>
+        <a href="{{ url_for('workouts') }}"><i>Move</i> Workouts</a>
+        <a href="{{ url_for('notes') }}"><i>Notes</i> Notes</a>
         <a href="{{ url_for('todo') }}"><i>Task</i> Daily Tasks</a>
         <a href="{{ url_for('nutrition') }}"><i>Food</i> Nutrition Hub</a>
         <a href="{{ url_for('analytics') }}"><i>Data</i> Analytics Core</a>
       </nav>
       <div class="sidebar-bottom">
-        <a href="{{ url_for('logout') }}" class="logout"><i>Out</i> Secure Logout</a>
+        <a href="{{ url_for('logout') }}" class="logout">Logout</a>
       </div>
     </aside>
 
     <main class="main-content">
       <header class="topbar-glass">
-        <div class="user-menu" onclick="showToast('Profile', 'Account settings coming soon.')">
+        <div class="desktop-title">
+          <strong>Home Workspace</strong>
+          <span>Track. Review. Improve.</span>
+        </div>
+        <div class="user-menu" id="userMenuBtn" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
           <span class="user-name">{{ name }}</span>
           <div class="avatar"><span>{{ name[0] }}</span></div>
         </div>
       </header>
+
+      <div class="dashboard-scroll">
 
       <div class="dashboard-scroll">
         <section id="section-dashboard" class="home-section active">
@@ -47,15 +56,15 @@
               <p>Your dashboard updates in real-time while tracking.</p>
             </div>
             <div class="hero-stats">
-              <div class="stat-pill">
+              <div class="stat-pill info-pill" id="caloriesPill" role="button" tabindex="0" title="See calories details">
                 <span class="stat-lbl">Calories Burned Today</span>
                 <span class="stat-val" id="dashCalories">0</span>
               </div>
-              <div class="stat-pill">
+              <div class="stat-pill info-pill" id="sessionsPill" role="button" tabindex="0" title="See sessions details">
                 <span class="stat-lbl">Sessions This Week</span>
                 <span class="stat-val" id="dashSessions">0</span>
               </div>
-              <div class="stat-pill accent streak-pill" id="streakPill" role="button" tabindex="0" title="See streak details">
+              <div class="stat-pill accent info-pill" id="streakPill" role="button" tabindex="0" title="See streak details">
                 <span class="stat-lbl">Current Streak</span>
                 <span class="stat-val" id="dashStreak">0 Days</span>
               </div>
@@ -141,7 +150,7 @@
 
         <section id="section-tracker" class="home-section">
           <div class="tracker-grid">
-            <div>
+            <div class="tracker-main">
               <section class="hero-card">
                 <div class="eyebrow">Live Activity Tracker</div>
                 <h1>Track steps, pace, distance, and route in real-time.</h1>
@@ -186,7 +195,7 @@
               </section>
             </div>
 
-            <section class="map-panel">
+            <section class="map-panel tracker-aside">
               <div class="panel-head">
                 <h2>Movement Route Map</h2>
                 <span id="mapLabel">Map ready</span>
@@ -226,6 +235,72 @@
         If you do not open the app for <strong>35 hours</strong>, your streak will end and reset to zero.
         Come back every day to keep it growing.
       </p>
+    </div>
+  </div>
+
+  <div class="streak-overlay" id="caloriesOverlay" role="dialog" aria-modal="true" aria-labelledby="caloriesModalTitle">
+    <div class="streak-card" role="document">
+      <button type="button" class="streak-close" id="caloriesClose" aria-label="Close">&times;</button>
+      <div class="streak-eyebrow" id="caloriesModalTitle">Energy Burned</div>
+      <div class="streak-number" id="caloriesBigCount">0</div>
+      <div class="streak-unit">kcals today</div>
+      <p class="streak-explainer">
+        This is an estimate of your total calories burned today through your active tracked sessions and distance covered.
+        Keep moving to increase your daily burn!
+      </p>
+    </div>
+  </div>
+
+  <div class="streak-overlay" id="sessionsOverlay" role="dialog" aria-modal="true" aria-labelledby="sessionsModalTitle">
+    <div class="streak-card" role="document">
+      <button type="button" class="streak-close" id="sessionsClose" aria-label="Close">&times;</button>
+      <div class="streak-eyebrow" id="sessionsModalTitle">Weekly Activity</div>
+      <div class="streak-number" id="sessionsBigCount">0</div>
+      <div class="streak-unit">sessions this week</div>
+      <p class="streak-explainer">
+        This shows the total number of workouts and tracking sessions you have recorded in the last 7 days.
+        Consistency is key to reaching your goals!
+      </p>
+    </div>
+  </div>
+
+  <div class="profile-menu" id="profileMenu" role="menu" aria-hidden="true">
+    <div class="profile-menu-head">
+      <div class="profile-avatar-wrap">
+        <img id="profileAvatarPreview" alt="Profile picture" />
+        <div class="profile-avatar-fallback" id="profileAvatarFallback">{{ name[0] }}</div>
+      </div>
+      <div>
+        <strong id="profileMenuName">{{ name }}</strong>
+        <small id="profileMenuEmail">Signed in user</small>
+      </div>
+    </div>
+    <button type="button" class="profile-menu-item" id="profileManageBtn">Manage Account</button>
+    <button type="button" class="profile-menu-item" id="profileSettingsBtn">Settings</button>
+    <button type="button" class="profile-menu-item" id="profilePhotoBtn">Change Profile Picture</button>
+    <input type="file" id="profilePhotoInput" accept="image/*" hidden />
+  </div>
+
+  <div class="profile-crop-overlay" id="profileCropOverlay" aria-hidden="true">
+    <div class="profile-crop-card">
+      <h3>Crop Profile Picture</h3>
+      <p>Drag and zoom your photo. The circular preview is how it will look.</p>
+      <div class="crop-layout">
+        <div class="crop-stage-wrap">
+          <canvas id="profileCropCanvas" width="320" height="320"></canvas>
+          <div class="crop-mask-circle"></div>
+        </div>
+        <div class="crop-preview-wrap">
+          <span>Round Preview</span>
+          <canvas id="profileRoundPreview" width="128" height="128"></canvas>
+        </div>
+      </div>
+      <label for="cropZoomRange">Zoom</label>
+      <input id="cropZoomRange" type="range" min="1" max="3" step="0.01" value="1.2" />
+      <div class="crop-actions">
+        <button type="button" class="control-button secondary" id="cropCancelBtn">Cancel</button>
+        <button type="button" class="control-button primary" id="cropSaveBtn">Save Picture</button>
+      </div>
     </div>
   </div>
 

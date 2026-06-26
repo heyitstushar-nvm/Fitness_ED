@@ -185,8 +185,8 @@ html, body { max-width: 100vw; overflow-x: hidden; }
   }
   .mobile-tabbar a:active { background: var(--surface-hover); }
 
-  /* Reposition floating theme toggle so it doesn't clash with tabbar */
-  #theme-toggle { display: none !important; }
+  /* Keep floating theme toggle hidden on app pages to avoid tabbar clash */
+  body.app-page #theme-toggle { display: none !important; }
 
   /* ====== Hide existing in-page chrome, replaced by mobile shell ====== */
   body.app-page header > .brand,

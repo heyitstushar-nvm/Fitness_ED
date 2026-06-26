@@ -22,6 +22,22 @@
   const dashDistance = document.getElementById('dashDistance');
   const dashSteps = document.getElementById('dashSteps');
   const dashMinutes = document.getElementById('dashMinutes');
+  const userMenuBtn = document.getElementById('userMenuBtn');
+  const profileMenu = document.getElementById('profileMenu');
+  const profileMenuName = document.getElementById('profileMenuName');
+  const profileMenuEmail = document.getElementById('profileMenuEmail');
+  const profileAvatarPreview = document.getElementById('profileAvatarPreview');
+  const profileAvatarFallback = document.getElementById('profileAvatarFallback');
+  const profileManageBtn = document.getElementById('profileManageBtn');
+  const profileSettingsBtn = document.getElementById('profileSettingsBtn');
+  const profilePhotoBtn = document.getElementById('profilePhotoBtn');
+  const profilePhotoInput = document.getElementById('profilePhotoInput');
+  const profileCropOverlay = document.getElementById('profileCropOverlay');
+  const cropCanvas = document.getElementById('profileCropCanvas');
+  const roundPreview = document.getElementById('profileRoundPreview');
+  const zoomRange = document.getElementById('cropZoomRange');
+  const cropCancelBtn = document.getElementById('cropCancelBtn');
+  const cropSaveBtn = document.getElementById('cropSaveBtn');
 
   let watchId = null;
   let sessionStartedAt = null;
@@ -33,6 +49,15 @@
   let progressChart = null;
   let baseSummary = null;
   let recentHistory = [];
+  let mobileTrackerBanner = null;
+  let profileState = { username: '', email: '', avatar_data: '' };
+  let cropImage = null;
+  let cropScale = 1.2;
+  let cropX = 0;
+  let cropY = 0;
+  let draggingCrop = false;
+  let dragStartX = 0;
+  let dragStartY = 0;
 
   const map = L.map('map', { zoomControl: false }).setView([20.5937, 78.9629], 5);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
@@ -55,7 +80,7 @@
   const getLiveSnapshot = () => {
     const durationSeconds = sessionStartedAt ? Math.round((Date.now() - sessionStartedAt) / 1000) : 0;
     const distanceKm = totalDistanceMeters / 1000;
-    // Use 1.35m per step — accurate for running/jogging cadence
+    // Use 1.35m per step â€” accurate for running/jogging cadence
     const steps = Math.max(0, Math.round(totalDistanceMeters / 1.35));
     const activeMinutes = Math.max(0, Math.round(durationSeconds / 60));
     return {
@@ -84,7 +109,7 @@
     dashSteps.textContent = Math.round(today.steps || 0).toLocaleString();
     dashMinutes.textContent = `${Math.round(today.active_minutes || 0)} min`;
 
-    // Progress Now widget — uses customizable goals
+    // Progress Now widget â€” uses customizable goals
     const stepsVal = Math.round(today.steps || 0);
     const distanceVal = Number(today.distance_km || 0);
     const activeMin = Number(today.active_minutes || 0);
@@ -191,6 +216,150 @@
     renderGoalLabels();
   }
 
+  const setAvatarVisual = (avatarData) => {
+    const snapAvatar = document.querySelector('.snap-avatar');
+    const topAvatarText = document.querySelector('.avatar span');
+    if (avatarData) {
+      if (profileAvatarPreview) {
+        profileAvatarPreview.src = avatarData;
+        profileAvatarPreview.classList.add('show');
+      }
+      if (profileAvatarFallback) profileAvatarFallback.style.display = 'none';
+      if (snapAvatar) snapAvatar.innerHTML = `<img src="${avatarData}" alt="Profile" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      if (topAvatarText) topAvatarText.style.display = 'none';
+      const topAvatar = document.querySelector('.avatar');
+      if (topAvatar) topAvatar.style.backgroundImage = `url(${avatarData})`;
+      if (topAvatar) {
+        topAvatar.style.backgroundSize = 'cover';
+        topAvatar.style.backgroundPosition = 'center';
+      }
+      return;
+    }
+
+    if (profileAvatarPreview) {
+      profileAvatarPreview.removeAttribute('src');
+      profileAvatarPreview.classList.remove('show');
+    }
+    if (profileAvatarFallback) profileAvatarFallback.style.display = 'grid';
+    if (topAvatarText) topAvatarText.style.display = 'inline';
+    const topAvatar = document.querySelector('.avatar');
+    if (topAvatar) topAvatar.style.backgroundImage = '';
+  };
+
+  const loadProfile = async () => {
+    if (!profileMenu) return;
+    try {
+      const res = await fetch('/api/profile');
+      if (!res.ok) return;
+      profileState = await res.json();
+      if (profileMenuName) profileMenuName.textContent = profileState.username || 'User';
+      if (profileMenuEmail) profileMenuEmail.textContent = profileState.email || '';
+      setAvatarVisual(profileState.avatar_data || '');
+    } catch (e) {}
+  };
+
+  const toggleProfileMenu = (open) => {
+    if (!profileMenu || !userMenuBtn) return;
+    const next = typeof open === 'boolean' ? open : !profileMenu.classList.contains('open');
+    profileMenu.classList.toggle('open', next);
+    profileMenu.setAttribute('aria-hidden', next ? 'false' : 'true');
+    userMenuBtn.setAttribute('aria-expanded', next ? 'true' : 'false');
+  };
+
+  const drawCropCanvas = () => {
+    if (!cropCanvas || !cropImage) return;
+    const ctx = cropCanvas.getContext('2d');
+    const w = cropCanvas.width;
+    const h = cropCanvas.height;
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#0f0f12';
+    ctx.fillRect(0, 0, w, h);
+
+    const drawW = cropImage.width * cropScale;
+    const drawH = cropImage.height * cropScale;
+    const x = (w - drawW) / 2 + cropX;
+    const y = (h - drawH) / 2 + cropY;
+    ctx.drawImage(cropImage, x, y, drawW, drawH);
+    drawRoundPreview();
+  };
+
+  const drawRoundPreview = () => {
+    if (!roundPreview || !cropCanvas) return;
+    const pctx = roundPreview.getContext('2d');
+    const size = roundPreview.width;
+    pctx.clearRect(0, 0, size, size);
+    pctx.save();
+    pctx.beginPath();
+    pctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+    pctx.closePath();
+    pctx.clip();
+    pctx.drawImage(cropCanvas, 36, 36, 248, 248, 0, 0, size, size);
+    pctx.restore();
+  };
+
+  const openCropOverlay = () => {
+    if (!profileCropOverlay) return;
+    profileCropOverlay.classList.add('open');
+    profileCropOverlay.setAttribute('aria-hidden', 'false');
+  };
+
+  const closeCropOverlay = () => {
+    if (!profileCropOverlay) return;
+    profileCropOverlay.classList.remove('open');
+    profileCropOverlay.setAttribute('aria-hidden', 'true');
+  };
+
+  const saveCroppedAvatar = async () => {
+    if (!roundPreview) return;
+    const imageData = roundPreview.toDataURL('image/png', 0.9);
+    const res = await fetch('/api/profile/avatar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image_data: imageData }),
+    });
+    if (!res.ok) {
+      showToast('Profile', 'Could not save your photo.');
+      return;
+    }
+    profileState.avatar_data = imageData;
+    setAvatarVisual(imageData);
+    showToast('Profile', 'Profile picture updated.');
+    closeCropOverlay();
+  };
+
+  const ensureMobileTrackingBanner = () => {
+    if (!window.matchMedia('(max-width: 1024px)').matches) return;
+    if (mobileTrackerBanner) return;
+    mobileTrackerBanner = document.createElement('div');
+    mobileTrackerBanner.id = 'mobileTrackingBanner';
+    mobileTrackerBanner.style.position = 'fixed';
+    mobileTrackerBanner.style.left = '12px';
+    mobileTrackerBanner.style.right = '12px';
+    mobileTrackerBanner.style.bottom = '84px';
+    mobileTrackerBanner.style.padding = '10px 12px';
+    mobileTrackerBanner.style.borderRadius = '12px';
+    mobileTrackerBanner.style.background = 'var(--panel-strong)';
+    mobileTrackerBanner.style.border = '1px solid var(--accent)';
+    mobileTrackerBanner.style.boxShadow = 'var(--shadow)';
+    mobileTrackerBanner.style.fontSize = '0.82rem';
+    mobileTrackerBanner.style.display = 'none';
+    mobileTrackerBanner.style.zIndex = '9500';
+    document.body.appendChild(mobileTrackerBanner);
+  };
+
+  const updateMobileTrackingBanner = (active) => {
+    ensureMobileTrackingBanner();
+    if (!mobileTrackerBanner) return;
+    if (!active) {
+      mobileTrackerBanner.style.display = 'none';
+      return;
+    }
+    const distance = Number(totalDistanceMeters / 1000).toFixed(2);
+    const steps = Math.max(0, Math.round(totalDistanceMeters / 1.35)).toLocaleString();
+    mobileTrackerBanner.textContent = `Tracking active: ${distance} km â€¢ ${steps} steps`;
+    mobileTrackerBanner.style.display = 'block';
+  };
+
   const setTrackingState = (active, text) => {
     trackingStatus.textContent = text;
     statusDot.classList.toggle('live', active);
@@ -210,6 +379,7 @@
     }
     locationValue.textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
     syncDashboardCards();
+    updateMobileTrackingBanner(Boolean(sessionStartedAt));
   };
 
   const resetTracking = () => {
@@ -232,12 +402,13 @@
     paceValue.textContent = formatPace();
     syncDashboardCards();
     updateLiveNotification();
+    updateMobileTrackingBanner(Boolean(sessionStartedAt));
   };
 
   // Filter constants for sane GPS readings.
   const GPS_MIN_ACCURACY_M = 25;     // ignore readings worse than this
   const GPS_MIN_STEP_M = 3;          // ignore tiny jitters when standing still
-  const GPS_MAX_SPEED_MPS = 8;       // 28.8 km/h — faster than recreational runners
+  const GPS_MAX_SPEED_MPS = 8;       // 28.8 km/h â€” faster than recreational runners
   const GPS_WARMUP_FIXES = 2;        // require this many "good" fixes before counting distance
   let lastFixTime = null;
   let goodFixCount = 0;
@@ -267,7 +438,7 @@
       const segSpeed = segMeters / segSeconds;
 
       // 2) Drop standing-still jitter (< 3 m).
-      // 3) Drop GPS jumps (impossible speed) — keeps map fluid but doesn't credit distance.
+      // 3) Drop GPS jumps (impossible speed) â€” keeps map fluid but doesn't credit distance.
       // 4) Skip distance for the very first couple of fixes (warm-up).
       if (segMeters < GPS_MIN_STEP_M || segSpeed > GPS_MAX_SPEED_MPS || goodFixCount <= GPS_WARMUP_FIXES) {
         // Update marker position only; do NOT push or accumulate.
@@ -353,10 +524,10 @@
       const paceSec = elapsedSec / (totalDistanceMeters / 1000);
       paceText = formatPaceSeconds(paceSec);
     }
-    const body = `Steps: ${steps.toLocaleString()}  •  Distance: ${distanceKm.toFixed(2)} km  •  Pace: ${paceText}/km`;
+    const body = `Steps: ${steps.toLocaleString()}  â€¢  Distance: ${distanceKm.toFixed(2)} km  â€¢  Pace: ${paceText}/km`;
     try {
       if (activeNotif) { try { activeNotif.close(); } catch (e) {} }
-      activeNotif = new Notification('FITNESS ED — Live Run', {
+      activeNotif = new Notification('FITNESS ED â€” Live Run', {
         body,
         tag: 'fitnessed-live',
         renotify: false,
@@ -399,6 +570,19 @@
     updateTimer();
     timerId = window.setInterval(updateTimer, 1000);
     setTrackingState(true, 'Tracking in progress');
+    updateMobileTrackingBanner(true);
+    showToast('Tracker', 'Tracking started.');
+    if (navigator.vibrate) navigator.vibrate([90, 40, 90]);
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification('FITNESS ED Tracking', {
+          body: 'Tracking is now active. Keep moving.',
+          tag: 'fitnessed-start',
+          renotify: true,
+          requireInteraction: false,
+        });
+      } catch (e) {}
+    }
 
     watchId = navigator.geolocation.watchPosition(
       handlePosition,
@@ -415,6 +599,7 @@
     resetTracking();
     closeLiveNotification();
     setTrackingState(false, routePoints.length ? 'Tracking stopped' : 'Waiting to start');
+    updateMobileTrackingBanner(false);
     const savedSession = await logSessionToBackend();
     sessionStartedAt = null;
 
@@ -495,7 +680,7 @@
         (session) => `
           <article class="history-item">
             <div>
-              <strong>${fmtDate(session.started_at_iso, session.date_label)} • ${fmtTime(session.started_at_iso, session.time_label)}</strong>
+              <strong>${fmtDate(session.started_at_iso, session.date_label)} â€¢ ${fmtTime(session.started_at_iso, session.time_label)}</strong>
               <div class="history-metrics">
                 <span>${Number(session.distance_km).toFixed(2)} km</span>
                 <span>${session.pace_per_km} pace</span>
@@ -528,6 +713,118 @@
   openSectionButtons.forEach((button) => button.addEventListener('click', () => openSection(button.dataset.openSection)));
   startButton.addEventListener('click', startTracking);
   stopButton.addEventListener('click', stopTracking);
+
+  if (userMenuBtn && profileMenu) {
+    userMenuBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleProfileMenu();
+    });
+    userMenuBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleProfileMenu();
+      }
+    });
+    document.addEventListener('click', (e) => {
+      if (!profileMenu.contains(e.target) && !userMenuBtn.contains(e.target)) {
+        toggleProfileMenu(false);
+      }
+    });
+  }
+
+  if (profileManageBtn) {
+    profileManageBtn.addEventListener('click', async () => {
+      const nextName = window.prompt('Update display name:', profileState.username || '');
+      if (!nextName) return;
+      const res = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: nextName }),
+      });
+      if (res.ok) {
+        profileState.username = nextName;
+        if (profileMenuName) profileMenuName.textContent = nextName;
+        const topName = document.querySelector('.user-name');
+        if (topName) topName.textContent = nextName;
+        showToast('Profile', 'Name updated.');
+      } else {
+        showToast('Profile', 'Unable to update name.');
+      }
+    });
+  }
+
+  if (profileSettingsBtn) {
+    profileSettingsBtn.addEventListener('click', () => {
+      showToast('Settings', 'More settings will be added here.');
+    });
+  }
+
+  if (profilePhotoBtn && profilePhotoInput) {
+    profilePhotoBtn.addEventListener('click', () => profilePhotoInput.click());
+    profilePhotoInput.addEventListener('change', (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          cropImage = img;
+          cropScale = 1.2;
+          cropX = 0;
+          cropY = 0;
+          if (zoomRange) zoomRange.value = String(cropScale);
+          drawCropCanvas();
+          openCropOverlay();
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+      profilePhotoInput.value = '';
+    });
+  }
+
+  if (zoomRange) {
+    zoomRange.addEventListener('input', () => {
+      cropScale = Number(zoomRange.value);
+      drawCropCanvas();
+    });
+  }
+
+  if (cropCanvas) {
+    cropCanvas.addEventListener('mousedown', (e) => {
+      draggingCrop = true;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+    });
+    window.addEventListener('mouseup', () => { draggingCrop = false; });
+    window.addEventListener('mousemove', (e) => {
+      if (!draggingCrop) return;
+      cropX += e.clientX - dragStartX;
+      cropY += e.clientY - dragStartY;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      drawCropCanvas();
+    });
+    cropCanvas.addEventListener('touchstart', (e) => {
+      const t = e.touches[0];
+      draggingCrop = true;
+      dragStartX = t.clientX;
+      dragStartY = t.clientY;
+    }, { passive: true });
+    window.addEventListener('touchend', () => { draggingCrop = false; }, { passive: true });
+    window.addEventListener('touchmove', (e) => {
+      if (!draggingCrop) return;
+      const t = e.touches[0];
+      cropX += t.clientX - dragStartX;
+      cropY += t.clientY - dragStartY;
+      dragStartX = t.clientX;
+      dragStartY = t.clientY;
+      drawCropCanvas();
+    }, { passive: true });
+  }
+
+  if (cropCancelBtn) cropCancelBtn.addEventListener('click', closeCropOverlay);
+  if (cropSaveBtn) cropSaveBtn.addEventListener('click', () => saveCroppedAvatar().catch(() => showToast('Profile', 'Could not save image.')));
 
   // ---------- Streak modal + warning notifications ----------
   const streakPill = document.getElementById('streakPill');
@@ -578,7 +875,59 @@
   if (streakOverlay) {
     streakOverlay.addEventListener('click', (e) => { if (e.target === streakOverlay) closeStreakModal(); });
   }
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeStreakModal(); });
+
+  // ---------- Calories and Sessions modals ----------
+  const caloriesPill = document.getElementById('caloriesPill');
+  const caloriesOverlay = document.getElementById('caloriesOverlay');
+  const caloriesClose = document.getElementById('caloriesClose');
+  const caloriesBigCount = document.getElementById('caloriesBigCount');
+
+  const sessionsPill = document.getElementById('sessionsPill');
+  const sessionsOverlay = document.getElementById('sessionsOverlay');
+  const sessionsClose = document.getElementById('sessionsClose');
+  const sessionsBigCount = document.getElementById('sessionsBigCount');
+
+  const openCaloriesModal = () => { 
+    if (caloriesBigCount) caloriesBigCount.textContent = dashCalories ? dashCalories.textContent : '0';
+    if (caloriesOverlay) caloriesOverlay.classList.add('open'); 
+  };
+  const closeCaloriesModal = () => { if (caloriesOverlay) caloriesOverlay.classList.remove('open'); };
+
+  const openSessionsModal = () => { 
+    if (sessionsBigCount) sessionsBigCount.textContent = dashSessions ? dashSessions.textContent : '0';
+    if (sessionsOverlay) sessionsOverlay.classList.add('open'); 
+  };
+  const closeSessionsModal = () => { if (sessionsOverlay) sessionsOverlay.classList.remove('open'); };
+
+  if (caloriesPill) {
+    caloriesPill.addEventListener('click', openCaloriesModal);
+    caloriesPill.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCaloriesModal(); }
+    });
+  }
+  if (caloriesClose) caloriesClose.addEventListener('click', closeCaloriesModal);
+  if (caloriesOverlay) {
+    caloriesOverlay.addEventListener('click', (e) => { if (e.target === caloriesOverlay) closeCaloriesModal(); });
+  }
+
+  if (sessionsPill) {
+    sessionsPill.addEventListener('click', openSessionsModal);
+    sessionsPill.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSessionsModal(); }
+    });
+  }
+  if (sessionsClose) sessionsClose.addEventListener('click', closeSessionsModal);
+  if (sessionsOverlay) {
+    sessionsOverlay.addEventListener('click', (e) => { if (e.target === sessionsOverlay) closeSessionsModal(); });
+  }
+
+  document.addEventListener('keydown', (e) => { 
+    if (e.key === 'Escape') {
+      closeStreakModal();
+      closeCaloriesModal();
+      closeSessionsModal();
+    }
+  });
 
   // Streak-ending warnings: notify at 8h, 16h, 24h, 32h after last visit
   // (i.e. when ~27h, 19h, 11h, 3h remain). Fires while the page is open.
@@ -652,5 +1001,6 @@
   loadDashboardSummary();
   loadRecentHistory();
   loadStreak();
+  loadProfile();
   openSection(initialSection);
 })();

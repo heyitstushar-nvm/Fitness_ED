@@ -248,341 +248,445 @@
       crossorigin=""
     ></script>
     <script>
-      const menuButton = document.querySelector(".menu-button");
-      const menuPanel = document.getElementById("menuPanel");
-      const menuItems = Array.from(menuPanel.querySelectorAll("button"));
-      const dashboardScreen = document.getElementById("dashboardScreen");
-      const todoScreen = document.getElementById("todoScreen");
-      const aboutScreen = document.getElementById("aboutScreen");
-      const loginScreen = document.getElementById("loginScreen");
-      const startButton = document.getElementById("startButton");
-      const stopButton = document.getElementById("stopButton");
-      const trackingStatus = document.getElementById("trackingStatus");
-      const statusDot = document.getElementById("statusDot");
-      const elapsedTime = document.getElementById("elapsedTime");
-      const stepsValue = document.getElementById("stepsValue");
-      const distanceValue = document.getElementById("distanceValue");
-      const paceValue = document.getElementById("paceValue");
-      const locationValue = document.getElementById("locationValue");
-      const mapLabel = document.getElementById("mapLabel");
-      const todoForm = document.getElementById("todoForm");
-      const todoInput = document.getElementById("todoInput");
-      const todoList = document.getElementById("todoList");
-      const todoCount = document.getElementById("todoCount");
-      const todoDoneCount = document.getElementById("todoDoneCount");
-      const loginForm = document.getElementById("loginForm");
-      const userNameInput = document.getElementById("userNameInput");
-      const loginNote = document.getElementById("loginNote");
+  const menuButton = document.querySelector(".menu-button");
+  const menuPanel = document.getElementById("menuPanel");
+  const menuItems = Array.from(menuPanel.querySelectorAll("button"));
+  const dashboardScreen = document.getElementById("dashboardScreen");
+  const todoScreen = document.getElementById("todoScreen");
+  const aboutScreen = document.getElementById("aboutScreen");
+  const loginScreen = document.getElementById("loginScreen");
+  const startButton = document.getElementById("startButton");
+  const stopButton = document.getElementById("stopButton");
+  const trackingStatus = document.getElementById("trackingStatus");
+  const statusDot = document.getElementById("statusDot");
+  const elapsedTime = document.getElementById("elapsedTime");
+  const stepsValue = document.getElementById("stepsValue");
+  const distanceValue = document.getElementById("distanceValue");
+  const paceValue = document.getElementById("paceValue");
+  const locationValue = document.getElementById("locationValue");
+  const mapLabel = document.getElementById("mapLabel");
+  const todoForm = document.getElementById("todoForm");
+  const todoInput = document.getElementById("todoInput");
+  const todoList = document.getElementById("todoList");
+  const todoCount = document.getElementById("todoCount");
+  const todoDoneCount = document.getElementById("todoDoneCount");
+  const loginForm = document.getElementById("loginForm");
+  const userNameInput = document.getElementById("userNameInput");
+  const loginNote = document.getElementById("loginNote");
 
-      let watchId = null;
-      let startTimestamp = null;
-      let timerId = null;
-      let totalDistanceMeters = 0;
-      let routePoints = [];
-      let startMarker = null;
-      let liveMarker = null;
-      let todos = [
-        { id: 1, text: "Stretch for 10 minutes", done: false },
-        { id: 2, text: "Evening 3 km walk", done: true },
-      ];
-      let savedUserName = localStorage.getItem("fitnessEdUserName") || "";
+  let watchId = null;
+  let startTimestamp = null;
+  let timerId = null;
+  let totalDistanceMeters = 0;
+  let routePoints = [];
+  let rawRoutePoints = []; // for map matching
+  let startMarker = null;
+  let liveMarker = null;
+  let accuracyCircle = null;
+  let kfLat = null;
+  let kfLng = null;
+  let lastSnapCount = 0;
 
-      const map = L.map("map", { zoomControl: false }).setView(
-        [20.5937, 78.9629],
-        5,
-      );
+  // ===== ACCURACY CONFIG =====
+  const ACCURACY_THRESHOLD = 25;   // meters - reject points worse than this
+  const MIN_DISTANCE = 3;          // meters - minimum movement to record
+  const MAX_SPEED = 10;            // m/s - reject unrealistic jumps (36 km/h)
+  const SNAP_EVERY_N_POINTS = 15;  // call OSRM every N points
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution: "&copy; OpenStreetMap contributors",
-      }).addTo(map);
+  let todos = [
+    { id: 1, text: "Stretch for 10 minutes", done: false },
+    { id: 2, text: "Evening 3 km walk", done: true },
+  ];
+  let savedUserName = localStorage.getItem("fitnessEdUserName") || "";
 
-      L.control.zoom({ position: "bottomright" }).addTo(map);
+  const map = L.map("map", { zoomControl: false }).setView([20.5937, 78.9629], 5);
 
-      const routeLine = L.polyline([], {
-        color: "#4ef2b3",
-        weight: 5,
-        opacity: 0.9,
-      }).addTo(map);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap contributors",
+  }).addTo(map);
 
-      const formatElapsed = (seconds) => {
-        const mins = Math.floor(seconds / 60)
-          .toString()
-          .padStart(2, "0");
-        const secs = Math.floor(seconds % 60)
-          .toString()
-          .padStart(2, "0");
-        return `${mins}:${secs}`;
-      };
+  L.control.zoom({ position: "bottomright" }).addTo(map);
 
-      const formatPace = () => {
-        if (!startTimestamp || totalDistanceMeters < 10) return "0:00";
-        const elapsedSeconds = (Date.now() - startTimestamp) / 1000;
-        const paceSeconds = elapsedSeconds / (totalDistanceMeters / 1000);
-        const mins = Math.floor(paceSeconds / 60);
-        const secs = Math.floor(paceSeconds % 60)
-          .toString()
-          .padStart(2, "0");
-        return `${mins}:${secs}`;
-      };
+  // Raw route (live, before snap) - lighter color
+  const rawRouteLine = L.polyline([], {
+    color: "#4ef2b3",
+    weight: 3,
+    opacity: 0.4,
+    dashArray: "5, 8"
+  }).addTo(map);
 
-      const updateStats = (lat, lng) => {
-        const estimatedSteps = Math.round(totalDistanceMeters / 0.78);
-        stepsValue.textContent = estimatedSteps.toLocaleString();
-        distanceValue.textContent = `${(totalDistanceMeters / 1000).toFixed(2)} km`;
-        paceValue.textContent = formatPace();
-        locationValue.textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-      };
+  // Snapped/smoothed route - main route
+  const routeLine = L.polyline([], {
+    color: "#4ef2b3",
+    weight: 5,
+    opacity: 0.95,
+    lineJoin: "round",
+    lineCap: "round"
+  }).addTo(map);
 
-      const setTrackingState = (active, text) => {
-        trackingStatus.textContent = text;
-        statusDot.classList.toggle("live", active);
-        mapLabel.textContent = active ? "Tracking live" : "Map ready";
-      };
+  // ===== HELPER FUNCTIONS =====
+  const getDistance = (lat1, lng1, lat2, lng2) => {
+    const R = 6371e3;
+    const φ1 = (lat1 * Math.PI) / 180;
+    const φ2 = (lat2 * Math.PI) / 180;
+    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+    const Δλ = ((lng2 - lng1) * Math.PI) / 180;
+    const a =
+      Math.sin(Δφ / 2) ** 2 +
+      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
 
-      const resetTracking = () => {
-        if (watchId !== null) {
-          navigator.geolocation.clearWatch(watchId);
-          watchId = null;
-        }
-        if (timerId) {
-          window.clearInterval(timerId);
-          timerId = null;
-        }
-      };
+  const formatElapsed = (seconds) => {
+    const mins = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const secs = Math.floor(seconds % 60).toString().padStart(2, "0");
+    return `${mins}:${secs}`;
+  };
 
-      const updateTimer = () => {
-        if (!startTimestamp) {
-          elapsedTime.textContent = "00:00";
-          return;
-        }
-        elapsedTime.textContent = formatElapsed(
-          (Date.now() - startTimestamp) / 1000,
-        );
-        paceValue.textContent = formatPace();
-      };
+  const formatPace = () => {
+    if (!startTimestamp || totalDistanceMeters < 10) return "0:00";
+    const elapsedSeconds = (Date.now() - startTimestamp) / 1000;
+    const paceSeconds = elapsedSeconds / (totalDistanceMeters / 1000);
+    const mins = Math.floor(paceSeconds / 60);
+    const secs = Math.floor(paceSeconds % 60).toString().padStart(2, "0");
+    return `${mins}:${secs}`;
+  };
 
-      const handlePosition = (position) => {
-        const { latitude, longitude, accuracy } = position.coords;
-        const nextPoint = [latitude, longitude];
+  const updateStats = (lat, lng) => {
+    const estimatedSteps = Math.round(totalDistanceMeters / 0.78);
+    stepsValue.textContent = estimatedSteps.toLocaleString();
+    distanceValue.textContent = `${(totalDistanceMeters / 1000).toFixed(2)} km`;
+    paceValue.textContent = formatPace();
+    locationValue.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  };
 
-        if (routePoints.length > 0) {
-          totalDistanceMeters += map.distance(
-            routePoints[routePoints.length - 1],
-            nextPoint,
+  const setTrackingState = (active, text) => {
+    trackingStatus.textContent = text;
+    statusDot.classList.toggle("live", active);
+    mapLabel.textContent = active ? "Tracking live" : "Map ready";
+  };
+
+  const resetTracking = () => {
+    if (watchId !== null) {
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+    }
+    if (timerId) {
+      window.clearInterval(timerId);
+      timerId = null;
+    }
+  };
+
+  const updateTimer = () => {
+    if (!startTimestamp) {
+      elapsedTime.textContent = "00:00";
+      return;
+    }
+    elapsedTime.textContent = formatElapsed((Date.now() - startTimestamp) / 1000);
+    paceValue.textContent = formatPace();
+  };
+
+  // ===== MAP MATCHING (OSRM) =====
+  const snapToRoad = async () => {
+    if (rawRoutePoints.length < 2) return;
+
+    try {
+      // OSRM limit: ~100 points per request, take last batch
+      const pointsToSnap = rawRoutePoints.slice(-100);
+      const coordStr = pointsToSnap
+        .map((p) => `${p[1]},${p[0]}`)
+        .join(";");
+
+      // Use 'foot' profile for walking
+      const url = `https://router.project-osrm.org/match/v1/foot/${coordStr}?geometries=geojson&overview=full&radiuses=${pointsToSnap.map(() => 25).join(";")}`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (data.code === "Ok" && data.matchings && data.matchings.length > 0) {
+        // Combine all matchings
+        let snapped = [];
+        data.matchings.forEach((m) => {
+          snapped = snapped.concat(
+            m.geometry.coordinates.map((c) => [c[1], c[0]])
           );
-        } else {
-          startMarker = L.marker(nextPoint).addTo(map).bindPopup("Start point");
-        }
-
-        routePoints.push(nextPoint);
-        routeLine.setLatLngs(routePoints);
-
-        if (!liveMarker) {
-          liveMarker = L.circleMarker(nextPoint, {
-            radius: 8,
-            color: "#ffd36e",
-            fillColor: "#ffd36e",
-            fillOpacity: 0.9,
-          }).addTo(map);
-        } else {
-          liveMarker.setLatLng(nextPoint);
-        }
-
-        map.fitBounds(routeLine.getBounds(), {
-          padding: [28, 28],
-          maxZoom: 17,
         });
 
-        updateStats(latitude, longitude);
-        mapLabel.textContent = `Accuracy ±${Math.round(accuracy)} m`;
-      };
+        routeLine.setLatLngs(snapped);
 
-      const startTracking = () => {
-        if (!navigator.geolocation) {
-          setTrackingState(false, "Geolocation not supported");
-          return;
+        // Recalculate distance from snapped route for accuracy
+        let newDistance = 0;
+        for (let i = 1; i < snapped.length; i++) {
+          newDistance += getDistance(
+            snapped[i - 1][0],
+            snapped[i - 1][1],
+            snapped[i][0],
+            snapped[i][1]
+          );
         }
+        totalDistanceMeters = newDistance;
+        mapLabel.textContent = `Route snapped to path ✓`;
+      }
+    } catch (err) {
+      console.warn("Map matching failed, using raw GPS:", err);
+    }
+  };
 
+  // ===== HANDLE POSITION =====
+  const handlePosition = (position) => {
+    const { latitude, longitude, accuracy, speed } = position.coords;
+
+    // 1. Filter bad accuracy
+    if (accuracy > ACCURACY_THRESHOLD) {
+      mapLabel.textContent = `Weak GPS signal (±${Math.round(accuracy)}m)`;
+      return;
+    }
+
+    // 2. Apply Kalman filter for smoothing
+    const smoothLat = kfLat.filter(latitude);
+    const smoothLng = kfLng.filter(longitude);
+    const nextPoint = [smoothLat, smoothLng];
+
+    // 3. Distance + speed sanity check
+    if (rawRoutePoints.length > 0) {
+      const lastPoint = rawRoutePoints[rawRoutePoints.length - 1];
+      const dist = getDistance(lastPoint[0], lastPoint[1], smoothLat, smoothLng);
+
+      // Ignore tiny movements (GPS jitter when standing still)
+      if (dist < MIN_DISTANCE) {
+        // Still update marker and accuracy circle
+        if (liveMarker) liveMarker.setLatLng(nextPoint);
+        if (accuracyCircle) {
+          accuracyCircle.setLatLng(nextPoint).setRadius(accuracy);
+        }
+        return;
+      }
+
+      // Ignore unrealistic jumps (teleporting)
+      const timeDelta = 1; // assume ~1s between points
+      if (dist / timeDelta > MAX_SPEED) {
+        console.warn("Rejected GPS jump:", dist, "m");
+        return;
+      }
+
+      totalDistanceMeters += dist;
+    } else {
+      // First point - becomes start marker
+      startMarker = L.marker(nextPoint).addTo(map).bindPopup("Start point");
+    }
+
+    // 4. Add to raw route
+    rawRoutePoints.push(nextPoint);
+    rawRouteLine.setLatLngs(rawRoutePoints);
+    routeLine.setLatLngs(rawRoutePoints); // show immediately
+
+    // 5. Live marker + accuracy circle
+    if (!liveMarker) {
+      liveMarker = L.circleMarker(nextPoint, {
+        radius: 8,
+        color: "#ffd36e",
+        fillColor: "#ffd36e",
+        fillOpacity: 0.9,
+      }).addTo(map);
+
+      accuracyCircle = L.circle(nextPoint, {
+        radius: accuracy,
+        color: "#ffd36e",
+        fillColor: "#ffd36e",
+        fillOpacity: 0.1,
+        weight: 1,
+      }).addTo(map);
+    } else {
+      liveMarker.setLatLng(nextPoint);
+      accuracyCircle.setLatLng(nextPoint).setRadius(accuracy);
+    }
+
+    map.fitBounds(routeLine.getBounds(), {
+      padding: [40, 40],
+      maxZoom: 18,
+    });
+
+    updateStats(smoothLat, smoothLng);
+    mapLabel.textContent = `Accuracy ±${Math.round(accuracy)} m`;
+
+    // 6. Run map matching every N points
+    if (
+      rawRoutePoints.length >= SNAP_EVERY_N_POINTS &&
+      rawRoutePoints.length - lastSnapCount >= SNAP_EVERY_N_POINTS
+    ) {
+      lastSnapCount = rawRoutePoints.length;
+      snapToRoad();
+    }
+  };
+
+  // ===== START / STOP =====
+  const startTracking = () => {
+    if (!navigator.geolocation) {
+      setTrackingState(false, "Geolocation not supported");
+      return;
+    }
+
+    resetTracking();
+    totalDistanceMeters = 0;
+    routePoints = [];
+    rawRoutePoints = [];
+    lastSnapCount = 0;
+    routeLine.setLatLngs([]);
+    rawRouteLine.setLatLngs([]);
+    stepsValue.textContent = "0";
+    distanceValue.textContent = "0.00 km";
+    paceValue.textContent = "0:00";
+
+    // Reset Kalman filters for fresh session
+    kfLat = new KalmanFilter({ R: 0.01, Q: 3 });
+    kfLng = new KalmanFilter({ R: 0.01, Q: 3 });
+
+    if (startMarker) { map.removeLayer(startMarker); startMarker = null; }
+    if (liveMarker) { map.removeLayer(liveMarker); liveMarker = null; }
+    if (accuracyCircle) { map.removeLayer(accuracyCircle); accuracyCircle = null; }
+
+    startTimestamp = Date.now();
+    updateTimer();
+    timerId = window.setInterval(updateTimer, 1000);
+    setTrackingState(true, "Tracking in progress");
+
+    watchId = navigator.geolocation.watchPosition(
+      handlePosition,
+      (error) => {
+        const messages = {
+          1: "Location permission denied",
+          2: "Location unavailable",
+          3: "Location request timed out",
+        };
+        setTrackingState(false, messages[error.code] || "Unable to fetch location");
         resetTracking();
-        totalDistanceMeters = 0;
-        routePoints = [];
-        routeLine.setLatLngs([]);
-        stepsValue.textContent = "0";
-        distanceValue.textContent = "0.00 km";
-        paceValue.textContent = "0:00";
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 10000,
+      }
+    );
+  };
 
-        if (startMarker) {
-          map.removeLayer(startMarker);
-          startMarker = null;
-        }
+  const stopTracking = () => {
+    resetTracking();
+    // Final snap to road on stop for cleanest route
+    if (rawRoutePoints.length >= 2) {
+      snapToRoad();
+    }
+    setTrackingState(
+      false,
+      rawRoutePoints.length ? "Tracking stopped" : "Waiting to start"
+    );
+  };
 
-        if (liveMarker) {
-          map.removeLayer(liveMarker);
-          liveMarker = null;
-        }
-
-        startTimestamp = Date.now();
-        updateTimer();
-        timerId = window.setInterval(updateTimer, 1000);
-        setTrackingState(true, "Tracking in progress");
-
-        watchId = navigator.geolocation.watchPosition(
-          handlePosition,
-          (error) => {
-            const messages = {
-              1: "Location permission denied",
-              2: "Location unavailable",
-              3: "Location request timed out",
-            };
-            setTrackingState(
-              false,
-              messages[error.code] || "Unable to fetch location",
-            );
-            resetTracking();
-          },
-          {
-            enableHighAccuracy: true,
-            maximumAge: 0,
-            timeout: 10000,
-          },
-        );
-      };
-
-      const stopTracking = () => {
-        resetTracking();
-        setTrackingState(
-          false,
-          routePoints.length ? "Tracking stopped" : "Waiting to start",
-        );
-      };
-
-      const renderTodos = () => {
-        todoList.innerHTML = "";
-
-        if (!todos.length) {
-          const emptyItem = document.createElement("li");
-          emptyItem.className = "empty-state";
-          emptyItem.textContent = "No tasks yet. Add your first to do above.";
-          todoList.appendChild(emptyItem);
-        } else {
-          todos.forEach((todo) => {
-            const item = document.createElement("li");
-            item.className = `todo-item${todo.done ? " done" : ""}`;
-            item.innerHTML = `
-              <input type="checkbox" ${todo.done ? "checked" : ""} aria-label="Mark task complete" />
-              <div class="todo-text">
-                <strong>${todo.text}</strong>
-                <span>${todo.done ? "Completed" : "Pending"}</span>
-              </div>
-              <button class="todo-delete" type="button">Delete</button>
-            `;
-
-            const checkbox = item.querySelector('input[type="checkbox"]');
-            const deleteButton = item.querySelector(".todo-delete");
-
-            checkbox.addEventListener("change", () => {
-              todo.done = checkbox.checked;
-              renderTodos();
-            });
-
-            deleteButton.addEventListener("click", () => {
-              todos = todos.filter((entry) => entry.id !== todo.id);
-              renderTodos();
-            });
-
-            todoList.appendChild(item);
-          });
-        }
-
-        const completed = todos.filter((todo) => todo.done).length;
-        todoCount.textContent = `${todos.length} ${todos.length === 1 ? "task" : "tasks"}`;
-        todoDoneCount.textContent = `${completed} completed`;
-      };
-
-      const updateLoginNote = () => {
-        loginNote.textContent = savedUserName
-          ? `Current saved user: ${savedUserName}`
-          : "No name saved yet.";
-        userNameInput.value = savedUserName;
-      };
-
-      const openScreen = (screenName) => {
-        if (screenName === "Home") {
-          window.location.href = "{{ url_for('home') | safe }}";
-          return;
-        }
-
-        const showTodo = screenName === "To Do List";
-        const showAbout = screenName === "About Us";
-        const showLogin = screenName === "Login";
-        const showDashboard = !showTodo && !showAbout && !showLogin;
-
-        dashboardScreen.classList.toggle("active", showDashboard);
-        todoScreen.classList.toggle("active", showTodo);
-        aboutScreen.classList.toggle("active", showAbout);
-        loginScreen.classList.toggle("active", showLogin);
-        menuPanel.classList.remove("open");
-        menuButton.classList.remove("open");
-        if (showDashboard) {
-          window.setTimeout(() => map.invalidateSize(), 120);
-        }
-      };
-
-      menuButton.addEventListener("click", () => {
-        menuPanel.classList.toggle("open");
-        menuButton.classList.toggle("open");
-      });
-
-      document.addEventListener("click", (event) => {
-        if (
-          !menuPanel.contains(event.target) &&
-          !menuButton.contains(event.target)
-        ) {
-          menuPanel.classList.remove("open");
-          menuButton.classList.remove("open");
-        }
-      });
-
-      startButton.addEventListener("click", startTracking);
-      stopButton.addEventListener("click", stopTracking);
-
-      menuItems.forEach((item) => {
-        item.addEventListener("click", (e) => {
-          if (item.tagName === "A" || item.textContent.trim() === "Login") {
-            return;
-          }
-          openScreen(item.textContent.trim());
+  // ===== TODOS / LOGIN / MENU (unchanged) =====
+  const renderTodos = () => {
+    todoList.innerHTML = "";
+    if (!todos.length) {
+      const emptyItem = document.createElement("li");
+      emptyItem.className = "empty-state";
+      emptyItem.textContent = "No tasks yet. Add your first to do above.";
+      todoList.appendChild(emptyItem);
+    } else {
+      todos.forEach((todo) => {
+        const item = document.createElement("li");
+        item.className = `todo-item${todo.done ? " done" : ""}`;
+        item.innerHTML = `
+          <input type="checkbox" ${todo.done ? "checked" : ""} aria-label="Mark task complete" />
+          <div class="todo-text">
+            <strong>${todo.text}</strong>
+            <span>${todo.done ? "Completed" : "Pending"}</span>
+          </div>
+          <button class="todo-delete" type="button">Delete</button>
+        `;
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        const deleteButton = item.querySelector(".todo-delete");
+        checkbox.addEventListener("change", () => {
+          todo.done = checkbox.checked;
+          renderTodos();
         });
-      });
-
-      todoForm.addEventListener("submit", (event) => {
-        event.preventDefault();
-        const value = todoInput.value.trim();
-        if (!value) return;
-
-        todos.unshift({
-          id: Date.now(),
-          text: value,
-          done: false,
+        deleteButton.addEventListener("click", () => {
+          todos = todos.filter((entry) => entry.id !== todo.id);
+          renderTodos();
         });
-
-        todoInput.value = "";
-        renderTodos();
+        todoList.appendChild(item);
       });
+    }
+    const completed = todos.filter((todo) => todo.done).length;
+    todoCount.textContent = `${todos.length} ${todos.length === 1 ? "task" : "tasks"}`;
+    todoDoneCount.textContent = `${completed} completed`;
+  };
 
-      loginForm.addEventListener("submit", (event) => {
-        event.preventDefault();
-        const value = userNameInput.value.trim();
-        if (!value) return;
+  const updateLoginNote = () => {
+    loginNote.textContent = savedUserName
+      ? `Current saved user: ${savedUserName}`
+      : "No name saved yet.";
+    userNameInput.value = savedUserName;
+  };
 
-        savedUserName = value;
-        localStorage.setItem("fitnessEdUserName", savedUserName);
-        updateLoginNote();
-      });
+  const openScreen = (screenName) => {
+    if (screenName === "Home") {
+      window.location.href = "{{ url_for('home') | safe }}";
+      return;
+    }
+    const showTodo = screenName === "To Do List";
+    const showAbout = screenName === "About Us";
+    const showLogin = screenName === "Login";
+    const showDashboard = !showTodo && !showAbout && !showLogin;
+    dashboardScreen.classList.toggle("active", showDashboard);
+    todoScreen.classList.toggle("active", showTodo);
+    aboutScreen.classList.toggle("active", showAbout);
+    loginScreen.classList.toggle("active", showLogin);
+    menuPanel.classList.remove("open");
+    menuButton.classList.remove("open");
+    if (showDashboard) window.setTimeout(() => map.invalidateSize(), 120);
+  };
 
-      renderTodos();
-      updateLoginNote();
-    </script>
+  menuButton.addEventListener("click", () => {
+    menuPanel.classList.toggle("open");
+    menuButton.classList.toggle("open");
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!menuPanel.contains(event.target) && !menuButton.contains(event.target)) {
+      menuPanel.classList.remove("open");
+      menuButton.classList.remove("open");
+    }
+  });
+
+  startButton.addEventListener("click", startTracking);
+  stopButton.addEventListener("click", stopTracking);
+
+  menuItems.forEach((item) => {
+    item.addEventListener("click", (e) => {
+      if (item.tagName === "A" || item.textContent.trim() === "Login") return;
+      openScreen(item.textContent.trim());
+    });
+  });
+
+  todoForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const value = todoInput.value.trim();
+    if (!value) return;
+    todos.unshift({ id: Date.now(), text: value, done: false });
+    todoInput.value = "";
+    renderTodos();
+  });
+
+  loginForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const value = userNameInput.value.trim();
+    if (!value) return;
+    savedUserName = value;
+    localStorage.setItem("fitnessEdUserName", savedUserName);
+    updateLoginNote();
+  });
+
+  renderTodos();
+  updateLoginNote();
+</script>
   </body>
 </html>

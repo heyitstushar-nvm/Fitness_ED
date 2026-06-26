@@ -1,0 +1,46 @@
+# Goal Description
+
+Update the `workouts.html` page to focus entirely on the interactive SVG muscle models. Remove the gender selection and photo illustration components, enhance the SVG hover effect to produce a glowing outline, and implement a slider button for toggling between "Front" and "Back" views (preparing for the `back.svg` file you will provide).
+
+## User Review Required
+
+Please review the proposed UI changes. Once approved, I will implement them:
+- **Gender switch removal**: I will also remove references to gender in `workouts.js` and default to a standard exercise fetch since gender selection is gone.
+- **Front/Back slider**: I will implement a sleek, pill-shaped toggle switch. The back side will temporarily contain a placeholder until you provide the `back.svg`.
+- **Glowing outlines**: The CSS will be updated so that hovering adds a sharp, glowing stroke/outline around the hovered muscle, without drastically changing its interior fill.
+
+## Open Questions
+
+- Do you have a preference for the glowing outline color? (I will use the app's primary accent color `var(--accent)` by default).
+
+## Proposed Changes
+
+### Workouts Template
+
+#### [MODIFY] [workouts.html](file:///C:/Users/tusha/OneDrive/Desktop/LOCALLL/Fitness_ED/templates/workouts.html)
+- Remove `<div class="gender-switch">...</div>`.
+- Remove the `<div class="body-photo-wrap">` containing the model picture.
+- Remove `<div class="muscle-model-card">`.
+- Add a new "Front / Back" toggle slider above the muscle SVG.
+- Wrap the current SVG in a `<div id="svgFront">` and create a placeholder `<div id="svgBack" style="display: none;">` for the back SVG.
+
+### Workouts Scripts
+
+#### [MODIFY] [workouts.js](file:///C:/Users/tusha/OneDrive/Desktop/LOCALLL/Fitness_ED/static/workouts.js)
+- Remove logic related to `genderSwitch`, `setGender`, and `photo`.
+- Add event listeners for the new "Front/Back" slider button to switch between the two SVG containers.
+- Update the API call to no longer depend on the `gender` variable.
+
+### Workouts Styles
+
+#### [MODIFY] [workouts.css](file:///C:/Users/tusha/OneDrive/Desktop/LOCALLL/Fitness_ED/static/workouts.css)
+- Remove unused classes (`.gender-btn`, `.body-photo-wrap`, `.muscle-model-card`).
+- Style the new "Front/Back" slider button using modern, dynamic aesthetics (e.g. pill shape, sliding background for the active state).
+- Update `.muscle-node:hover` and `.muscle-node.active` to apply a glowing stroke outline using `filter: drop-shadow(...)` and `stroke` adjustments.
+
+## Verification Plan
+
+### Manual Verification
+- Ensure the page renders correctly without the gender switch or extra illustrations.
+- Test the new Front/Back slider to confirm it toggles the SVG visibility properly.
+- Hover and click on the muscles to verify that the glowing outline effect works seamlessly.

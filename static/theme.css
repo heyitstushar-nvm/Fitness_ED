@@ -177,7 +177,7 @@ input:focus, .todo-input:focus {
 
 /* Sidebar tweaks */
 .sidebar {
-  background: var(--surface-soft) !important;
+  background: linear-gradient(180deg, var(--panel-strong), var(--panel)) !important;
   border-right-color: var(--border) !important;
 }
 .sidebar-nav a {
@@ -191,7 +191,7 @@ input:focus, .todo-input:focus {
 .sidebar-nav a.active {
   background: var(--surface-hover) !important;
   color: var(--text) !important;
-  border-left-color: var(--accent) !important;
+  border-color: var(--accent) !important;
 }
 .topbar-glass {
   background: var(--surface-soft) !important;
@@ -227,8 +227,13 @@ input:focus, .todo-input:focus {
   .section { padding: 3.5rem 1rem !important; }
   .landing-footer { padding: 2.5rem 1rem 1.5rem !important; }
   .glow-orb { display: none; } /* prevent off-canvas glows from forcing layout width */
-  /* Hide the floating theme toggle on landing — keeps the page clean */
-  body.landing-body #theme-toggle { display: none !important; }
+  body.landing-body #theme-toggle {
+    display: grid !important;
+    right: 14px;
+    bottom: 14px;
+    width: 44px;
+    height: 44px;
+  }
 }
 
 /* Auth page brown/white overrides */

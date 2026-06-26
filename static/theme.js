@@ -5,13 +5,15 @@
   function apply(theme) {
     root.setAttribute('data-theme', theme);
     try { localStorage.setItem(KEY, theme); } catch (e) {}
+
     const btn = document.getElementById('theme-toggle');
     if (btn) {
-      btn.textContent = theme === 'dark' ? '☀' : '☾';
+      btn.innerHTML = theme === 'dark' ? '&#9728;' : '&#9790;';
       btn.title = theme === 'dark' ? 'Light mode' : 'Dark mode';
     }
+
     const mtBtn = document.getElementById('mt-theme-btn');
-    if (mtBtn) mtBtn.textContent = theme === 'dark' ? '☀' : '☾';
+    if (mtBtn) mtBtn.innerHTML = theme === 'dark' ? '&#9728; Light mode' : '&#9790; Dark mode';
   }
 
   let saved = 'light';
@@ -32,25 +34,24 @@
     document.body.appendChild(btn);
   }
 
-  // ---------- Mobile App Shell (header + bottom tabbar) ----------
-  // Routes are resolved from anchors already on the page when possible,
-  // with sensible fallbacks.
   const PAGES = {
-    home:      { title: 'Dashboard',  back: null,    icon: '⌂' },
-    todo:      { title: 'Daily Tasks', back: '/home', icon: '✓' },
-    nutrition: { title: 'Nutrition',  back: '/home', icon: '🍽' },
-    analytics: { title: 'Analytics',  back: '/home', icon: '📊' },
-    history:   { title: 'History',    back: '/home', icon: '⏱' },
-    share:     { title: 'Share',      back: '/home', icon: '↗' },
-    more:      { title: 'About',      back: '/home', icon: '☰' },
+    home: { title: 'Dashboard', back: null },
+    workouts: { title: 'Workouts', back: '/home' },
+    notes: { title: 'Notes', back: '/home' },
+    todo: { title: 'Daily Tasks', back: '/home' },
+    nutrition: { title: 'Nutrition', back: '/home' },
+    analytics: { title: 'Analytics', back: '/home' },
+    history: { title: 'History', back: '/home' },
+    share: { title: 'Share', back: '/home' },
+    more: { title: 'Menu', back: '/home' },
   };
 
   const TABS = [
-    { key: 'home',      href: '/home',                          label: 'Home',      icon: '⌂' },
-    { key: 'todo',      href: '/todo',                          label: 'Tasks',     icon: '✓' },
-    { key: 'nutrition', href: '/nutrition',                     label: 'Meals',     icon: '🍽' },
-    { key: 'analytics', href: '/analytics',                     label: 'Stats',     icon: '📊' },
-    { key: 'history',   href: '/history',                       label: 'History',   icon: '⏱' },
+    { key: 'home', href: '/home', label: 'Home', icon: '&#8962;' },
+    { key: 'todo', href: '/todo', label: 'Tasks', icon: '&#10003;' },
+    { key: 'workouts', href: '/workouts', label: 'Workout', icon: '&#9874;' },
+    { key: 'notes', href: '/notes', label: 'Notes', icon: '&#9998;' },
+    { key: 'history', href: '/history', label: 'History', icon: '&#9201;' },
   ];
 
   function mountMobileShell() {
@@ -61,37 +62,35 @@
     const page = body.dataset.page || 'home';
     const meta = PAGES[page] || PAGES.home;
 
-    // Top bar
     const top = document.createElement('header');
     top.className = 'mobile-topbar';
-    const backBtn = meta.back
-      ? `<a class="mt-back" href="${meta.back}" aria-label="Back">‹</a>`
-      : '';
+    const backBtn = meta.back ? `<a class="mt-back" href="${meta.back}" aria-label="Back"><</a>` : '';
     top.innerHTML = `
       <div class="mt-left">
         ${backBtn}
         <div class="mt-title">${meta.title}</div>
       </div>
       <div class="mt-actions">
-        <button class="mt-icon-btn" id="mt-menu-btn" type="button" aria-label="Open menu">☰</button>
+        <button class="mt-icon-btn" id="mt-menu-btn" type="button" aria-label="Open menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+        </button>
       </div>
     `;
     body.prepend(top);
 
-    // Slide-down menu panel
     const panel = document.createElement('div');
     panel.className = 'mt-menu-panel';
     panel.id = 'mt-menu-panel';
     panel.innerHTML = `
-      <button class="mt-menu-item" id="mt-theme-btn" type="button">
-        <span id="mt-theme-icon">☾</span><span>Toggle theme</span>
-      </button>
-      <a class="mt-menu-item" href="/home"><span>⌂</span><span>Dashboard</span></a>
-      <a class="mt-menu-item" href="/todo"><span>✓</span><span>Daily Tasks</span></a>
-      <a class="mt-menu-item" href="/nutrition"><span>🍽</span><span>Nutrition</span></a>
-      <a class="mt-menu-item" href="/analytics"><span>📊</span><span>Analytics</span></a>
-      <a class="mt-menu-item" href="/history"><span>⏱</span><span>History</span></a>
-      <a class="mt-menu-item mt-menu-danger" href="/logout"><span>⏻</span><span>Sign out</span></a>
+      <button class="mt-menu-item" id="mt-theme-btn" type="button">Theme</button>
+      <a class="mt-menu-item" href="/home">Dashboard</a>
+      <a class="mt-menu-item" href="/workouts">Workouts</a>
+      <a class="mt-menu-item" href="/notes">Notes</a>
+      <a class="mt-menu-item" href="/todo">Daily Tasks</a>
+      <a class="mt-menu-item" href="/nutrition">Nutrition</a>
+      <a class="mt-menu-item" href="/analytics">Analytics</a>
+      <a class="mt-menu-item" href="/history">History</a>
+      <a class="mt-menu-item mt-menu-danger" href="/logout">Sign out</a>
     `;
     body.appendChild(panel);
 
@@ -100,28 +99,30 @@
     backdrop.id = 'mt-menu-backdrop';
     body.appendChild(backdrop);
 
-    function closeMenu() {
+    const closeMenu = () => {
       panel.classList.remove('open');
       backdrop.classList.remove('open');
-    }
-    function openMenu() {
+    };
+
+    const openMenu = () => {
       panel.classList.add('open');
       backdrop.classList.add('open');
-    }
+    };
+
     document.getElementById('mt-menu-btn').addEventListener('click', () => {
       panel.classList.contains('open') ? closeMenu() : openMenu();
     });
+
     backdrop.addEventListener('click', closeMenu);
+
     document.getElementById('mt-theme-btn').addEventListener('click', () => {
       toggleTheme();
-      const ico = document.getElementById('mt-theme-icon');
-      if (ico) ico.textContent = root.getAttribute('data-theme') === 'dark' ? '☀' : '☾';
+      closeMenu();
     });
 
-    // Bottom nav
     const nav = document.createElement('nav');
     nav.className = 'mobile-tabbar';
-    nav.innerHTML = TABS.map(t => `
+    nav.innerHTML = TABS.map((t) => `
       <a href="${t.href}" data-tab="${t.key}" class="${t.key === page ? 'active' : ''}">
         <span class="tab-ico">${t.icon}</span>
         <span>${t.label}</span>
@@ -129,7 +130,6 @@
     `).join('');
     body.appendChild(nav);
 
-    // Sync theme button label
     apply(root.getAttribute('data-theme') || 'light');
   }
 

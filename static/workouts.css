@@ -1,0 +1,246 @@
+.workouts-shell {
+  max-width: 1200px;
+  padding-top: 1.6rem;
+}
+
+.workouts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.workouts-hero {
+  margin-bottom: 1rem;
+}
+
+
+
+.workout-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 1rem;
+}
+
+.body-card,
+.results-card {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1rem;
+  background: var(--panel);
+}
+
+
+
+.muscle-board {
+  margin-top: 0.8rem;
+}
+
+.muscle-board h3 {
+  margin: 0 0 0.6rem;
+}
+
+.muscle-board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.view-toggle-pill {
+  position: relative;
+  display: inline-flex;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  padding: 0.2rem;
+}
+
+.view-toggle-pill input[type="radio"] {
+  display: none;
+}
+
+.view-toggle-pill label {
+  position: relative;
+  z-index: 2;
+  padding: 0.4rem 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text);
+  transition: color 0.3s ease;
+}
+
+.view-toggle-pill input[type="radio"]:checked + label {
+  color: var(--on-accent);
+}
+
+.pill-slider {
+  position: absolute;
+  top: 0.2rem;
+  bottom: 0.2rem;
+  left: 0.2rem;
+  width: calc(50% - 0.2rem);
+  background: var(--accent);
+  border-radius: 999px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+#viewBack:checked ~ .pill-slider {
+  transform: translateX(100%);
+}
+
+.placeholder-back {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+  background: var(--surface-soft);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+}
+
+.muscle-svg {
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+}
+
+.muscle-node {
+  cursor: pointer;
+  transition: filter 0.2s ease, opacity 0.2s ease;
+  pointer-events: visiblePainted;
+}
+
+.muscle-node:hover,
+.muscle-node.active,
+.muscle-node:hover path,
+.muscle-node.active path {
+  fill: var(--accent) !important;
+  fill-opacity: 0.85 !important;
+  filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.8)) brightness(1.2);
+  stroke: #000 !important;
+  stroke-width: 2px !important;
+  opacity: 0.95;
+}
+
+.muscle-svg text {
+  fill: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.result-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: baseline;
+  margin-bottom: 0.85rem;
+}
+
+.result-head h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.result-head span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.exercise-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.exercise-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-soft);
+  padding: 0.75rem;
+}
+
+.exercise-item h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.98rem;
+}
+
+.exercise-meta {
+  color: var(--muted);
+  font-size: 0.78rem;
+  margin-bottom: 0.3rem;
+}
+
+.exercise-item p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.exercise-preview {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  margin: 0.35rem 0 0.45rem;
+}
+
+.exercise-howto {
+  margin-top: 0.45rem !important;
+}
+
+.exercise-links {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-top: 0.45rem;
+}
+
+.exercise-links a {
+  text-decoration: none;
+  font-size: 0.78rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.34rem 0.65rem;
+  color: var(--text);
+  background: var(--surface-soft);
+}
+
+.exercise-links a:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+@media (max-width: 900px) {
+  .workout-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .workouts-shell {
+    padding-top: 0.8rem;
+  }
+
+  .workouts-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .muscle-board-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+
+  .exercise-preview {
+    height: 150px;
+  }
+}

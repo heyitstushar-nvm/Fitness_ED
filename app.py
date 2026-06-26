@@ -1,6 +1,9 @@
 import json
 import os
+import re
 from datetime import date, datetime, timedelta, timezone
+from urllib.parse import quote_plus
+from urllib.request import Request, urlopen
 
 STREAK_WINDOW_HOURS = 35
 
@@ -41,6 +44,43 @@ google = oauth.register(
 # Database Configuration
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'fitness_ed.db')
+
+# Parse muscle mapping CSV
+muscle_display_names = {
+    '0008f': 'Forearms',
+    'forearms': 'Forearms',
+}
+csv_path = os.path.join(basedir, 'Frontsvgmuscname.csv')
+if os.path.exists(csv_path):
+    try:
+        import csv
+        with open(csv_path, 'r', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                m_id = row.get('ID', '').strip().lower()
+                m_title = row.get('Title', '').strip()
+                if m_id and m_title:
+                    muscle_display_names[m_id] = m_title
+    except Exception as e:
+        print("Failed to parse Frontsvgmuscname.csv:", e)
+
+# Map canonical names to their clean display titles using ID lookup
+id_to_canonical = {
+    '0001s': 'serratus',
+    '0002c': 'chest',
+    '0003b': 'biceps',
+    '0004d': 'shoulders',
+    '0005n': 'neck',
+    '0006o': 'obliques',
+    '0007q': 'quads',
+    '0008v': 'vastus_medialis',
+    '0009a': 'inner_thighs',
+    '0010c': 'core',
+    '0008f': 'forearms',
+}
+for m_id, canonical in id_to_canonical.items():
+    if m_id in muscle_display_names:
+        muscle_display_names[canonical] = muscle_display_names[m_id]
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -92,6 +132,25 @@ class ActivitySession(db.Model):
     pace_per_km_seconds = db.Column(db.Integer, nullable=False, default=0)
     calories = db.Column(db.Integer, nullable=False, default=0)
     route_points_json = db.Column(db.Text, nullable=False, default='[]')
+
+
+class UserProfile(db.Model):
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    avatar_data = db.Column(db.Text, nullable=True)
+    settings_json = db.Column(db.Text, nullable=False, default='{}')
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+
+class NoteItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    title = db.Column(db.String(180), nullable=False, default='Untitled note')
+    content = db.Column(db.Text, nullable=False, default='')
+    color = db.Column(db.String(24), nullable=False, default='#fff8e7')
+    is_pinned = db.Column(db.Boolean, default=False)
+    is_archived = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
 
 with app.app_context():
@@ -218,6 +277,28 @@ def session_to_payload(row):
     }
 
 
+def get_or_create_profile(user_id):
+    profile = UserProfile.query.filter_by(user_id=user_id).first()
+    if not profile:
+        profile = UserProfile(user_id=user_id, settings_json='{}')
+        db.session.add(profile)
+        db.session.flush()
+    return profile
+
+
+def note_to_payload(note):
+    return {
+        'id': note.id,
+        'title': note.title,
+        'content': note.content,
+        'color': note.color,
+        'is_pinned': bool(note.is_pinned),
+        'is_archived': bool(note.is_archived),
+        'created_at': to_iso_utc(note.created_at),
+        'updated_at': to_iso_utc(note.updated_at),
+    }
+
+
 # Auth Routes
 @app.route('/login/google')
 def login_google():
@@ -327,6 +408,32 @@ def analytics():
     if 'user_id' not in session:
         return redirect(url_for('auth'))
     return render_template('analytics.html', name=session.get('user_name'))
+
+
+@app.route('/workouts')
+def workouts():
+    if 'user_id' not in session:
+        return redirect(url_for('auth'))
+    
+    front_svg = ""
+    svg_path = os.path.join(basedir, 'Front.svg')
+    if os.path.exists(svg_path):
+        try:
+            with open(svg_path, 'r', encoding='utf-8') as f:
+                front_svg = f.read()
+                # Inject class="muscle-svg" into <svg to ensure proper layout styling
+                front_svg = front_svg.replace('<svg', '<svg class="muscle-svg"', 1)
+        except Exception as e:
+            print("Failed to read Front.svg:", e)
+            
+    return render_template('workouts.html', name=session.get('user_name'), front_svg=front_svg)
+
+
+@app.route('/notes')
+def notes():
+    if 'user_id' not in session:
+        return redirect(url_for('auth'))
+    return render_template('notes.html', name=session.get('user_name'))
 
 
 @app.route('/history')
@@ -594,5 +701,293 @@ def activity_analytics():
     )
 
 
+# Profile APIs
+@app.route('/api/profile', methods=['GET'])
+def get_profile():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    user = User.query.filter_by(id=session['user_id']).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    profile = get_or_create_profile(user.id)
+    db.session.commit()
+
+    return jsonify(
+        {
+            'username': user.username,
+            'email': user.email,
+            'avatar_data': profile.avatar_data,
+            'settings': json.loads(profile.settings_json or '{}'),
+        }
+    )
+
+
+@app.route('/api/profile', methods=['PATCH'])
+def update_profile():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    user = User.query.filter_by(id=session['user_id']).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    data = request.json or {}
+    username = (data.get('username') or '').strip()
+    if username:
+        user.username = username[:100]
+        session['user_name'] = user.username
+
+    profile = get_or_create_profile(user.id)
+    settings = data.get('settings')
+    if isinstance(settings, dict):
+        profile.settings_json = json.dumps(settings)
+    profile.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    return jsonify({'success': True, 'username': user.username})
+
+
+@app.route('/api/profile/avatar', methods=['POST'])
+def update_profile_avatar():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data = request.json or {}
+    image_data = (data.get('image_data') or '').strip()
+    if not image_data.startswith('data:image/'):
+        return jsonify({'error': 'Invalid image'}), 400
+    if len(image_data) > 2_000_000:
+        return jsonify({'error': 'Image is too large'}), 400
+
+    profile = get_or_create_profile(session['user_id'])
+    profile.avatar_data = image_data
+    profile.updated_at = datetime.utcnow()
+    db.session.commit()
+    return jsonify({'success': True})
+
+
+# Notes APIs
+@app.route('/api/notes', methods=['GET'])
+def get_notes():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    include_archived = request.args.get('archived') == '1'
+    query_text = (request.args.get('q') or '').strip().lower()
+    rows = NoteItem.query.filter_by(user_id=session['user_id']).order_by(NoteItem.is_pinned.desc(), NoteItem.updated_at.desc()).all()
+
+    filtered = []
+    for row in rows:
+        if not include_archived and row.is_archived:
+            continue
+        if query_text:
+            hay = f'{row.title} {row.content}'.lower()
+            if query_text not in hay:
+                continue
+        filtered.append(note_to_payload(row))
+    return jsonify({'notes': filtered})
+
+
+@app.route('/api/notes', methods=['POST'])
+def create_note():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data = request.json or {}
+    title = (data.get('title') or 'Untitled note').strip()[:180]
+    content = (data.get('content') or '').strip()
+    color = (data.get('color') or '#fff8e7').strip()[:24]
+    row = NoteItem(
+        user_id=session['user_id'],
+        title=title if title else 'Untitled note',
+        content=content,
+        color=color if color else '#fff8e7',
+        is_pinned=bool(data.get('is_pinned', False)),
+        is_archived=bool(data.get('is_archived', False)),
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+    )
+    db.session.add(row)
+    db.session.commit()
+    return jsonify({'note': note_to_payload(row)})
+
+
+@app.route('/api/notes/<int:note_id>', methods=['PUT'])
+def update_note(note_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    row = NoteItem.query.filter_by(id=note_id, user_id=session['user_id']).first()
+    if not row:
+        return jsonify({'error': 'Note not found'}), 404
+
+    data = request.json or {}
+    if 'title' in data:
+        row.title = (data.get('title') or 'Untitled note').strip()[:180] or 'Untitled note'
+    if 'content' in data:
+        row.content = (data.get('content') or '').strip()
+    if 'color' in data:
+        row.color = (data.get('color') or '#fff8e7').strip()[:24] or '#fff8e7'
+    if 'is_pinned' in data:
+        row.is_pinned = bool(data.get('is_pinned'))
+    if 'is_archived' in data:
+        row.is_archived = bool(data.get('is_archived'))
+    row.updated_at = datetime.utcnow()
+    db.session.commit()
+    return jsonify({'note': note_to_payload(row)})
+
+
+@app.route('/api/notes/<int:note_id>/pin', methods=['POST'])
+def pin_note(note_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    row = NoteItem.query.filter_by(id=note_id, user_id=session['user_id']).first()
+    if not row:
+        return jsonify({'error': 'Note not found'}), 404
+    row.is_pinned = not row.is_pinned
+    row.updated_at = datetime.utcnow()
+    db.session.commit()
+    return jsonify({'success': True, 'note': note_to_payload(row)})
+
+
+@app.route('/api/notes/<int:note_id>/archive', methods=['POST'])
+def archive_note(note_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    row = NoteItem.query.filter_by(id=note_id, user_id=session['user_id']).first()
+    if not row:
+        return jsonify({'error': 'Note not found'}), 404
+    row.is_archived = not row.is_archived
+    row.updated_at = datetime.utcnow()
+    db.session.commit()
+    return jsonify({'success': True, 'note': note_to_payload(row)})
+
+
+@app.route('/api/notes/<int:note_id>', methods=['DELETE'])
+def delete_note(note_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    row = NoteItem.query.filter_by(id=note_id, user_id=session['user_id']).first()
+    if not row:
+        return jsonify({'error': 'Note not found'}), 404
+    db.session.delete(row)
+    db.session.commit()
+    return jsonify({'success': True})
+
+
+# Workouts API
+@app.route('/api/workouts/exercises', methods=['GET'])
+def workout_exercises():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    muscle = (request.args.get('muscle') or '').strip().lower()
+    muscle_aliases = {
+        # Front torso aliases
+        'abs': 'core',
+        'abdominals': 'core',
+        'side_ribs': 'side_ribs',
+        # Back/shoulder aliases
+        'rear_deltoids': 'rear_delts',
+        'rear_deltoid': 'rear_delts',
+        'posterior_delts': 'rear_delts',
+        'upperback': 'upper_back',
+        'upper-traps': 'upper_back',
+        # IDs directly coming from uploaded SVG files
+        'bicep': 'biceps',
+        'neck1': 'neck',
+        'adductor': 'adductor',
+        'deltoid': 'deltoid',
+        'traps_and_upper_back': 'traps_and_upper_back',
+        'erector_spinae': 'erector_spinae',
+        'teres_major_and_minor': 'teres_major_and_minor',
+        'vastus_medialis': 'vastus_medialis',
+        # SVG IDs from Front.svg and CSV mapping
+        '0001s': 'serratus',
+        '0002c': 'chest',
+        '0003b': 'biceps',
+        '0004d': 'shoulders',
+        '0005n': 'neck',
+        '0006o': 'obliques',
+        '0007q': 'quads',
+        '0008v': 'vastus_medialis',
+        '0009a': 'inner_thighs',
+        '0010c': 'core',
+        '0008f': 'forearms',
+        # Display name aliases from CSV
+        'serratus anterior': 'serratus',
+        'chest': 'chest',
+        'biceps': 'biceps',
+        'deltoids': 'shoulders',
+        'neck': 'neck',
+        'obliques': 'obliques',
+        'quads': 'quads',
+        'vasto medial': 'vastus_medialis',
+        'abductors': 'inner_thighs',
+        'core': 'core',
+        'forearms': 'forearms',
+    }
+    canonical_muscle = muscle_aliases.get(muscle, muscle)
+    display_name = muscle_display_names.get(muscle) or muscle_display_names.get(canonical_muscle) or canonical_muscle.replace('_', ' ').title()
+    gender = (request.args.get('gender') or 'male').strip().lower()
+
+    items = []
+    try:
+        import os
+        import json
+        db_path = os.path.join(os.path.dirname(__file__), 'exercises_db.json')
+        if os.path.exists(db_path):
+            with open(db_path, 'r') as f:
+                exercises_db = json.load(f)
+            items = exercises_db.get(canonical_muscle, [])
+
+            if canonical_muscle == 'rear_delts' and not items:
+                shoulder_items = exercises_db.get('shoulders', [])
+                items = [
+                    item for item in shoulder_items
+                    if 'rear delt' in str(item.get('target', '')).lower()
+                    or 'rear delt' in str(item.get('name', '')).lower()
+                    or 'face pull' in str(item.get('name', '')).lower()
+                ]
+
+            if canonical_muscle == 'upper_back' and not items:
+                upper_back_items = []
+                upper_back_items.extend(exercises_db.get('rhomboids', []))
+                upper_back_items.extend(exercises_db.get('traps', []))
+                # Keep list compact and avoid exact duplicate names.
+                seen = set()
+                deduped = []
+                for item in upper_back_items:
+                    key = str(item.get('name', '')).strip().lower()
+                    if key and key in seen:
+                        continue
+                    if key:
+                        seen.add(key)
+                    deduped.append(item)
+                items = deduped
+    except Exception as e:
+        print("Failed to load exercises_db.json:", e)
+
+    if not items:
+        # Generic fallback
+        items = [
+            {
+                'name': 'Push-up',
+                'description': f'A reliable choice for {canonical_muscle if canonical_muscle else "general fitness"} training.',
+                'difficulty': 'Beginner',
+                'target': canonical_muscle.replace('_', ' ').title() if canonical_muscle else 'Full Body',
+                'suggested_for': 'Female' if gender == 'female' else 'Male',
+                'how_to': 'Perform with full range of motion and stable breathing.',
+                'preview_image': 'https://images.pexels.com/photos/416717/pexels-photo-416717.jpeg?auto=compress&cs=tinysrgb&w=900',
+                'preview_video': '',
+                'learn_more_url': 'https://www.youtube.com/results?search_query=Jeff+Nippard+Push-up+form+tutorial'
+            }
+        ]
+
+    return jsonify({'muscle': canonical_muscle, 'display_name': display_name, 'gender': gender, 'exercises': items})
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, threaded=True, debug=True)

@@ -1,0 +1,187 @@
+.notes-shell {
+  max-width: 1180px;
+  padding-top: 1.6rem;
+}
+
+.notes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.notes-hero {
+  margin-bottom: 1rem;
+}
+
+.note-compose {
+  margin-top: 0;
+}
+
+.compose-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 60px;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+
+#noteColor {
+  width: 60px;
+  height: 50px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+}
+
+.compose-actions {
+  margin-top: 0.7rem;
+  display: flex;
+  gap: 0.6rem;
+}
+
+.notes-toolbar {
+  margin-top: 0.85rem;
+}
+
+.toolbar-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.filter-row {
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+.chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--text);
+  padding: 0.5rem 0.85rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.chip.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.notes-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.8rem;
+}
+
+.note-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.7rem;
+  min-height: 170px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.note-card h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.note-meta {
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 0.72rem;
+}
+
+:root[data-theme="dark"] .note-meta {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.note-body {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  max-height: 130px;
+  overflow: auto;
+}
+
+.note-actions {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+}
+
+.note-actions button {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.76);
+  color: #2a1d13;
+  padding: 0.35rem;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.note-actions button:hover {
+  border-color: var(--accent);
+}
+
+@media (max-width: 840px) {
+  .toolbar-row {
+    grid-template-columns: 1fr;
+  }
+
+  .notes-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .notes-shell {
+    padding-top: 0.8rem;
+  }
+
+  .notes-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .compose-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #noteColor {
+    width: 100%;
+  }
+
+  .compose-actions {
+    flex-direction: column;
+  }
+
+  .filter-row {
+    flex-wrap: wrap;
+  }
+
+  .note-card {
+    min-height: 0;
+  }
+
+  .note-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .note-actions button:last-child {
+    grid-column: span 2 !important;
+  }
+}

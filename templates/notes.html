@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FITNESS ED - Notes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='notes.css') }}">
+  <script src="{{ url_for('static', filename='theme.js') }}"></script>
+</head>
+<body class="app-page" data-page="notes">
+  <main class="app-shell notes-shell">
+    <header class="notes-header">
+      <div class="brand">FITNESS ED - Notes</div>
+      <a href="{{ url_for('home') }}" class="logout-btn" style="color:var(--accent)">Back to Main</a>
+    </header>
+
+    <section class="hero-card notes-hero">
+      <div class="eyebrow">Notebook</div>
+      <h1>Capture plans, training thoughts, and reminders.</h1>
+      <p>Includes create, edit, search, pin, archive, and delete.</p>
+    </section>
+
+    <section class="note-compose todo-screen">
+      <div class="compose-grid">
+        <input id="noteTitle" type="text" class="todo-input" placeholder="Note title" maxlength="180" />
+        <input id="noteColor" type="color" value="#fff8e7" />
+      </div>
+      <textarea id="noteContent" class="todo-input" rows="5" placeholder="Write your note here..."></textarea>
+      <div class="compose-actions">
+        <button id="saveNoteBtn" type="button" class="control-button primary">Save Note</button>
+        <button id="clearNoteBtn" type="button" class="control-button secondary">Clear</button>
+      </div>
+    </section>
+
+    <section class="notes-toolbar timeline">
+      <div class="toolbar-row">
+        <input id="noteSearch" type="text" class="todo-input" placeholder="Search notes..." />
+        <div class="filter-row">
+          <button class="chip active" data-filter="active" type="button">Active</button>
+          <button class="chip" data-filter="archived" type="button">Archived</button>
+          <button class="chip" data-filter="all" type="button">All</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div id="notesGrid" class="notes-grid"></div>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='main.js') }}"></script>
+  <script src="{{ url_for('static', filename='notes.js') }}"></script>
+</body>
+</html>
